@@ -1,0 +1,28 @@
+$ node alta-segura.ts agenda http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió una respuesta completa del revisor"}
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió una respuesta completa del revisor"}
+  espero entre 0 y 1000 ms y reintento con la misma llave
+intento 3: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió una respuesta completa del revisor"}
+  espero entre 0 y 2000 ms y reintento con la misma llave
+intento 4: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió una respuesta completa del revisor"}
+se agotaron los 4 intentos sin una respuesta definitiva; repetir más tarde con la llave 27448039-e4ad-4701-8fd0-597a17c28f2a es seguro
+(código de salida: 1)
+
+$ curl http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a'
+{"servicios":[{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000},{"id":2,"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/503","limite_ms":2000},{"id":4,"nombre":"inventario","url":"http://127.0.0.1:18081/lento/1500","limite_ms":2000},{"id":5,"nombre":"reportes","url":"http://127.0.0.1:18081/lento/3000","limite_ms":1000},{"id":6,"nombre":"facturacion","url":"http://127.0.0.1:18081/basura","limite_ms":2000},{"id":7,"nombre":"agenda","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}]}
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+GET /servicios
+
+--- terminal de la pasarela:
+pasarela en http://127.0.0.1:18082 → http://127.0.0.1:18080
+pasarela: el revisor respondió 201, pero la respuesta se pierde
+pasarela: el revisor respondió 409, pero la respuesta se pierde
+pasarela: el revisor respondió 409, pero la respuesta se pierde
+pasarela: el revisor respondió 409, pero la respuesta se pierde

@@ -1,0 +1,21 @@
+$ curl -i http://127.0.0.1:18080/servicios/1/informe -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/plain; charset=utf-8
+Content-Length: 865
+Date: Wed, 21 Oct 2026 13:19:30 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+TypeError: Cannot read properties of undefined (reading 'resultado')
+    at Object.informe [as manejador] (file://<carpeta>/servicios.ts:304:28)
+    at atender (file://<carpeta>/rutas.ts:104:16)
+    at atenderSinFiltrar (file://<carpeta>/servidor.ts:11:11)
+    at Server.<anonymous> (file://<carpeta>/servidor.ts:23:44)
+    at Server.emit (node:events:508:28)
+    at parserOnIncoming (node:_http_server:1210:12)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17)
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios/1/informe
+error en GET /servicios/1/informe

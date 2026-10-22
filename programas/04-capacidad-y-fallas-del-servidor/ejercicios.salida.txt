@@ -1,0 +1,205 @@
+### Ejercicio 1
+$ curl -i http://127.0.0.1:18080/servicios/3/salud -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 24
+Date: Wed, 21 Oct 2026 13:19:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe el servicio 3
+
+$ curl -i http://127.0.0.1:18080/servicios/4/informe -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/plain; charset=utf-8
+Content-Length: 63
+Date: Wed, 21 Oct 2026 13:19:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+error interno; referencia d88e2544-137d-436f-b5d2-c206d50ca348
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios/5/revisiones -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 403 Forbidden
+Content-Type: text/plain; charset=utf-8
+Content-Length: 74
+Date: Wed, 21 Oct 2026 13:19:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+tu credencial solo puede leer; para escribir pide una con rol de escritor
+
+$ curl -i http://127.0.0.1:18080/servicios/5/salud -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 504 Gateway Timeout
+Content-Type: text/plain; charset=utf-8
+Content-Length: 39
+Date: Wed, 21 Oct 2026 13:19:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el servicio 5 no respondió en 1000 ms
+
+$ curl -i http://127.0.0.1:18080/servicios/2/salud -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 35
+Date: Wed, 21 Oct 2026 13:19:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicio":2,"codigo":503,"ms":5}
+
+$ curl -i -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":"si"}'
+HTTP/1.1 422 Unprocessable Content
+Content-Type: text/plain; charset=utf-8
+Content-Length: 30
+Date: Wed, 21 Oct 2026 13:19:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+activo: debe ser true o false
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios/3/salud
+GET /servicios/4/informe
+error d88e2544-137d-436f-b5d2-c206d50ca348 en GET /servicios/4/informe: TypeError: Cannot read properties of undefined (reading 'resultado')
+    at Object.informe [as manejador] (file://<carpeta>/servicios.ts:304:28)
+    at atender (file://<carpeta>/rutas.ts:104:16)
+    at atenderSinFiltrar (file://<carpeta>/servidor.ts:23:11)
+    at Server.<anonymous> (file://<carpeta>/servidor.ts:35:44)
+POST /servicios/5/revisiones
+GET /servicios/5/salud
+GET /servicios/2/salud
+PUT /mantenimiento
+
+### Ejercicio 2
+$ node ejercicios/ej2.ts
+valor                                Date.parse  revisor
+"120"                                       120      120
+"1.5"                                         0     null
+"-1"                                          0     null
+"12 30"                                       0     null
+"Xyz, 21 Oct 2026 10:00:00 GMT"               0     null
+"Wed, 32 Oct 2026 10:00:00 GMT"            null     null
+"Wed, 21 Oct 2026 13:20:57 GMT"              61       61
+"Wednesday, 21-Oct-26 13:20:57 GMT"          61       61
+"Wed Oct 21 13:20:57 2026"                21661       61
+
+### Ejercicio 3, con fig04_01
+$ for id in 1 2 3 4 5 6 7 8 9 10; do curl -sS -o /dev/null -w '%{http_code} ' -X POST http://127.0.0.1:18080/servicios/$id/revisiones -H 'Authorization: Bearer escritura-b'; done; echo
+404 404 202 429 429 429 429 429 429 429 
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer admin'
+HTTP/1.1 202 Accepted
+Location: /revisiones/5
+Content-Type: application/json
+Content-Length: 60
+Date: Wed, 21 Oct 2026 13:19:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":5,"servicio":2,"estado":"pendiente","resultado":null}
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios/1/revisiones
+POST /servicios/2/revisiones
+POST /servicios/3/revisiones
+POST /servicios/4/revisiones
+POST /servicios/5/revisiones
+POST /servicios/6/revisiones
+POST /servicios/7/revisiones
+POST /servicios/8/revisiones
+POST /servicios/9/revisiones
+POST /servicios/10/revisiones
+POST /servicios/2/revisiones
+POST /servicios/2/revisiones
+POST /servicios/2/revisiones
+POST /servicios/2/revisiones
+
+### Ejercicio 3, con la variante de ejercicios/ej3 (límite por servicio)
+$ for id in 1 2 3 4 5 6 7 8 9 10; do curl -sS -o /dev/null -w '%{http_code} ' -X POST http://127.0.0.1:18080/servicios/$id/revisiones -H 'Authorization: Bearer escritura-b'; done; echo
+404 404 202 404 404 404 404 404 404 404 
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer admin'
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60
+Content-Type: text/plain; charset=utf-8
+Content-Length: 62
+Date: Wed, 21 Oct 2026 13:19:37 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+ya pediste 3 revisiones de este servicio en el último minuto
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios/1/revisiones
+POST /servicios/2/revisiones
+POST /servicios/3/revisiones
+POST /servicios/4/revisiones
+POST /servicios/5/revisiones
+POST /servicios/6/revisiones
+POST /servicios/7/revisiones
+POST /servicios/8/revisiones
+POST /servicios/9/revisiones
+POST /servicios/10/revisiones
+POST /servicios/2/revisiones
+POST /servicios/2/revisiones
+POST /servicios/2/revisiones
+POST /servicios/2/revisiones
+
+### Ejercicio 4 (con el laboratorio detenido)
+$ curl -i http://127.0.0.1:18080/servicios/1/salud -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 502 Bad Gateway
+Content-Type: text/plain; charset=utf-8
+Content-Length: 38
+Date: Wed, 21 Oct 2026 13:19:38 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no se pudo conectar con el servicio 1
+
+$ curl -i -w 'tardó %{time_total} s\n' http://127.0.0.1:18080/servicios/5/salud -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 502 Bad Gateway
+Content-Type: text/plain; charset=utf-8
+Content-Length: 38
+Date: Wed, 21 Oct 2026 13:19:38 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no se pudo conectar con el servicio 5
+tardó 0.001450 s
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/1/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ sleep 2
+$ curl http://127.0.0.1:18080/revisiones/1 -H 'Authorization: Bearer lectura-a'
+{"id":1,"servicio":1,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":null,"ms":null,"detalle":"sin conexión"}}
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios/1/salud
+GET /servicios/5/salud
+POST /servicios/1/revisiones
+GET /revisiones/1

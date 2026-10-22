@@ -1,0 +1,38 @@
+$ curl -i http://127.0.0.1:18080/servicios/2/salud -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 36
+Date: Wed, 21 Oct 2026 13:19:32 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicio":2,"codigo":503,"ms":20}
+
+$ curl -i -w 'tardó %{time_total} s\n' http://127.0.0.1:18080/servicios/5/salud -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/plain; charset=utf-8
+Content-Length: 63
+Date: Wed, 21 Oct 2026 13:19:33 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+error interno; referencia 53423d0e-11e2-4ce0-befe-6f701044a854
+tardó 1.002529 s
+
+$ curl -i http://127.0.0.1:18080/servicios/6/salud -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/plain; charset=utf-8
+Content-Length: 63
+Date: Wed, 21 Oct 2026 13:19:33 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+error interno; referencia 3ec30ef1-4589-44c0-a95c-00c1195b86d9
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios/2/salud
+GET /servicios/5/salud
+error 53423d0e-11e2-4ce0-befe-6f701044a854 en GET /servicios/5/salud: TimeoutError: The operation was aborted due to timeout
+GET /servicios/6/salud
+error 3ec30ef1-4589-44c0-a95c-00c1195b86d9 en GET /servicios/6/salud: TypeError: fetch failed

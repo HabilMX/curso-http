@@ -1,0 +1,23 @@
+$ npx redocly lint openapi.json --format=stylish 2>&1 | grep -v operationId   # el documento roto a propósito
+No configurations were provided -- using built in recommended configuration by default.
+
+validating openapi.json...
+openapi.json:
+  38:18   error    no-unresolved-refs      Can't resolve $ref
+  263:11  error    struct                  The field `description` must be present on this level.
+  541:9   warning  operation-2xx-response  Operation must have at least one `2XX` response.
+  541:9   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  555:9   warning  operation-2xx-response  Operation must have at least one `2XX` response.
+  555:9   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  571:9   warning  operation-2xx-response  Operation must have at least one `2XX` response.
+  571:9   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  585:9   warning  operation-2xx-response  Operation must have at least one `2XX` response.
+  585:9   warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  695:9   warning  operation-2xx-response  Operation must have at least one `2XX` response.
+
+openapi.json: validated in 93ms
+
+❌ Validation failed with 2 errors and 26 warnings.
+run `redocly lint --generate-ignore-file` to add all problems to the ignore file.
+
+(código de salida: 1)

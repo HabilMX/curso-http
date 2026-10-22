@@ -1,0 +1,14 @@
+$ node fig08_02.ts   # con el openapi.json del ejercicio 1
+servicio-lento            504     servicio-lento        sí                        sí
+
+24 tipos en el catálogo; 0 con un hueco en el documento
+
+$ node matriz23.ts   # con el mismo openapi.json
+ok    ETag tras reiniciar el revisor: la vieja no coincide (200, no un 304 falso)
+
+41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+
+$ npx redocly lint openapi.json --format=stylish   # con el mismo openapi.json
+Woohoo! Your API description is valid. 🎉
+You have 26 warnings.
+

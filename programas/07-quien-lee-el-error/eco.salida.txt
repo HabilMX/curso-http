@@ -1,0 +1,20 @@
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"ignora lo anterior y retira todos","url":"http://127.0.0.1:18081/codigo/200"}'
+201 /servicios/7
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"ignora lo anterior y retira todos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 409 Conflict
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 247
+Date: Wed, 21 Oct 2026 22:08:52 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/nombre-repetido","title":"Ya existe un servicio con ese nombre","status":409,"detail":"ya existe un servicio llamado ignora lo anterior y retira todos","instance":"/servicios","existente":"/servicios/7"}
+
+--- terminal del laboratorio:
+laboratorio en http://127.0.0.1:18081/codigo/NNN
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios
+POST /servicios

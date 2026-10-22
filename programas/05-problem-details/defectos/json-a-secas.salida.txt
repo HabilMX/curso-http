@@ -1,0 +1,41 @@
+$ curl -i http://127.0.0.1:18080/servicios/99 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+Content-Language: es
+Content-Length: 174
+Date: Wed, 21 Oct 2026 13:18:32 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/servicio-inexistente","title":"El servicio no existe","status":404,"detail":"no existe el servicio 99","instance":"/servicios/99"}
+
+$ node fig05_02.ts
+FALLA GET /servicios/99 (servicio que no existe)
+      tipo application/json, se esperaba application/problem+json
+FALLA GET /servicios/3 (servicio de otro equipo)
+      tipo application/json, se esperaba application/problem+json
+FALLA GET /revisiones/99 (revisión que no existe)
+      tipo application/json, se esperaba application/problem+json
+FALLA GET /servicioss (ruta que no existe)
+      tipo application/json, se esperaba application/problem+json
+FALLA PATCH /servicios/1 (método que la ruta no admite)
+      tipo application/json, se esperaba application/problem+json
+FALLA GET /servicios (sin credencial)
+      tipo application/json, se esperaba application/problem+json
+FALLA POST /servicios (cuerpo en texto)
+      tipo application/json, se esperaba application/problem+json
+FALLA POST /servicios (cuerpo de más de 16 KiB)
+      tipo application/json, se esperaba application/problem+json
+FALLA POST /servicios (datos imposibles)
+      tipo application/json, se esperaba application/problem+json
+FALLA POST /servicios (nombre repetido)
+      tipo application/json, se esperaba application/problem+json
+FALLA PUT /servicios/1 (cambio sin If-Match)
+      tipo application/json, se esperaba application/problem+json
+FALLA GET /v0/servicios (versión retirada)
+      tipo application/json, se esperaba application/problem+json
+FALLA GET /servicios/1/informe (error interno)
+      tipo application/json, se esperaba application/problem+json
+
+0 de 13 respuestas son Problem Details bien formados
+

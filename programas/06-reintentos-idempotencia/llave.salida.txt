@@ -1,0 +1,76 @@
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-avisos-1' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 201 Created
+Location: /servicios/7
+ETag: "7-1-0cabc364"
+Content-Type: application/json
+Content-Length: 86
+Date: Wed, 21 Oct 2026 22:26:31 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":7,"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-avisos-1' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 201 Created
+Location: /servicios/7
+ETag: "7-1-0cabc364"
+Content-Type: application/json
+Content-Length: 86
+Date: Wed, 21 Oct 2026 22:26:31 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":7,"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-avisos-1' -d '{"nombre":"correo","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 422 Unprocessable Content
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 228
+Date: Wed, 21 Oct 2026 22:26:31 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/llave-reutilizada","title":"Esa Idempotency-Key ya se usó con otra petición","status":422,"detail":"la llave alta-avisos-1 ya se usó con un cuerpo distinto","instance":"/servicios"}
+
+$ ( curl -o /dev/null -w 'primera: %{http_code}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-correo-1' -d '{"nombre":"correo","url":"http://127.0.0.1:18081/codigo/200"}' & sleep 0.1; curl -w '\nsegunda: %{http_code}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-correo-1' -d '{"nombre":"correo","url":"http://127.0.0.1:18081/codigo/200"}'; wait )
+{"type":"https://revisor.example/problemas/llave-en-curso","title":"Esa Idempotency-Key sigue en curso","status":409,"detail":"la petición original con la llave alta-correo-1 todavía no termina","instance":"/servicios"}
+
+segunda: 409
+primera: 201
+
+$ node alta-segura.ts agenda http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió una respuesta completa del revisor"}
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: 201 {"id":9,"nombre":"agenda","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+(código de salida: 0)
+
+$ node alta-segura.ts nomina2 http://127.0.0.1:18081/codigo/200 --sin-llave; echo "(código de salida: $?)"
+intento 1: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió una respuesta completa del revisor"}
+  espero entre 0 y 500 ms y reintento sin llave (podría duplicar)
+intento 2: 409 {"type":"https://revisor.example/problemas/nombre-repetido","title":"Ya existe un servicio con ese nombre","status":409,"detail":"ya existe un servicio llamado nomina2","instance":"/servicios","existente":"/servicios/10"}
+el servidor respondió 409: repetir lo mismo no lo arregla; sin llave no se sabe si lo que ya existe lo creó un intento anterior
+(código de salida: 1)
+
+$ curl http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a'
+{"servicios":[{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000},{"id":2,"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/503","limite_ms":2000},{"id":4,"nombre":"inventario","url":"http://127.0.0.1:18081/lento/1500","limite_ms":2000},{"id":5,"nombre":"reportes","url":"http://127.0.0.1:18081/lento/3000","limite_ms":1000},{"id":6,"nombre":"facturacion","url":"http://127.0.0.1:18081/basura","limite_ms":2000},{"id":7,"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000},{"id":8,"nombre":"correo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000},{"id":9,"nombre":"agenda","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000},{"id":10,"nombre":"nomina2","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}]}
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios
+POST /servicios
+idempotencia: la llave alta-avisos-1 ya se atendió; repito su respuesta
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+idempotencia: la llave bf0d47f7-f895-4945-8e27-2215869c5fc8 ya se atendió; repito su respuesta
+POST /servicios
+POST /servicios
+GET /servicios
+
+--- terminal de la pasarela:
+pasarela en http://127.0.0.1:18082 → http://127.0.0.1:18080
+pasarela: el revisor respondió 201, pero la respuesta se pierde
+pasarela: el revisor respondió 201, pero la respuesta se pierde

@@ -1,0 +1,77 @@
+# Los cuatro ejercicios seguidos, tras un solo arranque.
+# --- arrancar
+$ curl -i http://127.0.0.1:18080/servicios/1
+HTTP/1.1 200 OK
+ETag: "1-1-0e296858"
+Content-Type: application/json
+Content-Length: 88
+Date: Wed, 21 Oct 2026 13:17:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+# --- etag E1
+$ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/1 -H 'If-None-Match: "1-1"'
+200
+$ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/1 -H 'If-None-Match: W/"1-1-0e296858"'
+304
+$ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/1 -H 'If-None-Match: "9-9-00000000", W/"8-8-00000000"'
+200
+$ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/99 -H 'If-None-Match: *'
+404
+$ curl -i -L --post301 http://127.0.0.1:18080/viejo/servicios -H 'Content-Type: application/json' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 301 Moved Permanently
+Location: /servicios
+Content-Length: 0
+Date: Wed, 21 Oct 2026 13:17:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+HTTP/1.1 201 Created
+Location: /servicios/4
+ETag: "4-1-0e296858"
+Content-Type: application/json
+Content-Length: 86
+Date: Wed, 21 Oct 2026 13:17:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":4,"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+$ curl -s -w ' → %{http_code}\n' -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"d1","url":"http://2130706433:18081/codigo/200"}'
+{"id":5,"nombre":"d1","url":"http://2130706433:18081/codigo/200","limite_ms":2000}
+ → 201
+$ curl -s -w ' → %{http_code}\n' -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"d2","url":"http://2130706433:18080/servicios"}'
+destino prohibido: 127.0.0.1:18080: dirección privada o reservada
+ → 400
+$ curl -s -w ' → %{http_code}\n' -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"d3","url":"http://[::ffff:127.0.0.1]:18081/codigo/200"}'
+destino prohibido: [::ffff:7f00:1]:18081: dirección privada o reservada
+ → 400
+$ curl -s -w ' → %{http_code}\n' -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"d4","url":"http://[64:ff9b::a9fe:a9fe]/"}'
+destino prohibido: [64:ff9b::a9fe:a9fe]:80: dirección privada o reservada
+ → 400
+$ curl -s -w ' → %{http_code}\n' -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"d5","url":"http://example.com/"}'
+{"id":6,"nombre":"d5","url":"http://example.com/","limite_ms":2000}
+ → 201
+$ node ej4.ts 2; echo $?
+202 Accepted; seguimiento en /revisiones/1
+consulta 1: 200 pendiente, Retry-After: 1
+consulta 2: 200 pendiente, Retry-After: 1
+0
+# --- terminal del revisor (arranque 1):
+revisor en http://127.0.0.1:18080
+GET /servicios/1
+GET /servicios/1
+GET /servicios/1
+GET /servicios/1
+GET /servicios/99
+POST /viejo/servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios/2/revisiones
+GET /revisiones/1
+GET /revisiones/1
+# --- detener

@@ -1,0 +1,19 @@
+$ node fig03_02.ts
+Ana      lee:    200 "1-1-c0466c5e" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+Beto     lee:    200 "1-1-c0466c5e" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+Ana      guarda: 200 "1-2-c0466c5e" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/204","limite_ms":2000}
+Beto     guarda: 412 tu etiqueta ya no es la vigente: el servicio cambió o el revisor se reinició; vuelve a leerlo antes de cambiarlo
+Beto     lee:    200 "1-2-c0466c5e" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/204","limite_ms":2000}
+Beto     guarda: 200 "1-3-c0466c5e" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/204","limite_ms":3000}
+Al final lee:    200 "1-3-c0466c5e" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/204","limite_ms":3000}
+el cambio de Ana sigue ahí
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios/1
+GET /servicios/1
+PUT /servicios/1
+PUT /servicios/1
+GET /servicios/1
+PUT /servicios/1
+GET /servicios/1

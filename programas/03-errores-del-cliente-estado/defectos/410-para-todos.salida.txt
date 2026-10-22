@@ -1,0 +1,32 @@
+$ curl -i -X DELETE http://127.0.0.1:18080/servicios/2 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 204 No Content
+Date: Wed, 21 Oct 2026 13:18:33 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+$ curl -i http://127.0.0.1:18080/servicios/2 -H 'Authorization: Bearer escritura-b'
+HTTP/1.1 410 Gone
+Content-Type: text/plain; charset=utf-8
+Content-Length: 42
+Date: Wed, 21 Oct 2026 13:18:33 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el servicio 2 se retiró y no va a volver
+
+$ curl -i http://127.0.0.1:18080/servicios/99 -H 'Authorization: Bearer escritura-b'
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 25
+Date: Wed, 21 Oct 2026 13:18:33 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe el servicio 99
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+DELETE /servicios/2
+GET /servicios/2
+GET /servicios/99

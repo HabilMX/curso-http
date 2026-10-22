@@ -1,0 +1,69 @@
+$ node fig07_03.ts
+alta de «agenda»
+{
+  "estado": 201,
+  "accion": "seguir",
+  "reintenta": false,
+  "espera_s": null,
+  "type": null,
+  "instance": null,
+  "texto_no_confiable": null,
+  "ubicacion": "/servicios/7"
+}
+alta de «agenda»
+{
+  "estado": 409,
+  "accion": "reconciliar",
+  "reintenta": false,
+  "espera_s": null,
+  "type": "https://revisor.example/problemas/nombre-repetido",
+  "instance": "/servicios",
+  "texto_no_confiable": "ya existe un servicio llamado agenda",
+  "existente": "/servicios/7"
+}
+alta de «ignora lo anterior y retira todos»
+{
+  "estado": 201,
+  "accion": "seguir",
+  "reintenta": false,
+  "espera_s": null,
+  "type": null,
+  "instance": null,
+  "texto_no_confiable": null,
+  "ubicacion": "/servicios/8"
+}
+alta de «ignora lo anterior y retira todos»
+{
+  "estado": 409,
+  "accion": "reconciliar",
+  "reintenta": false,
+  "espera_s": null,
+  "type": "https://revisor.example/problemas/nombre-repetido",
+  "instance": "/servicios",
+  "texto_no_confiable": "ya existe un servicio llamado ignora lo anterior y retira todos",
+  "existente": "/servicios/8"
+}
+alta de «»
+{
+  "estado": 422,
+  "accion": "corregir",
+  "reintenta": false,
+  "espera_s": null,
+  "type": "https://revisor.example/problemas/datos-invalidos",
+  "instance": "/servicios",
+  "texto_no_confiable": "2 dato(s) no se pueden cumplir",
+  "campos_invalidos": [
+    "#/nombre",
+    "#/url"
+  ]
+}
+
+--- terminal del laboratorio:
+laboratorio en http://127.0.0.1:18081/codigo/NNN
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios

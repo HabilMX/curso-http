@@ -1,0 +1,44 @@
+$ curl -i http://127.0.0.1:18080/servicios/99 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 177
+Date: Wed, 21 Oct 2026 13:18:31 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/servicio-inexistente","title":"no existe el servicio 99","status":404,"detail":"no existe el servicio 99","instance":"/servicios/99"}
+
+$ curl -i http://127.0.0.1:18080/servicios/3 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 174
+Date: Wed, 21 Oct 2026 13:18:31 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/servicio-inexistente","title":"no existe el servicio 3","status":404,"detail":"no existe el servicio 3","instance":"/servicios/3"}
+
+$ node fig05_02.ts
+ok    GET /servicios/99 (servicio que no existe)
+FALLA GET /servicios/3 (servicio de otro equipo)
+      https://revisor.example/problemas/servicio-inexistente cambió de title o de status entre ocurrencias
+ok    GET /revisiones/99 (revisión que no existe)
+FALLA GET /servicioss (ruta que no existe)
+      title "no existe esa ruta" con about:blank; se esperaba Not Found
+FALLA PATCH /servicios/1 (método que la ruta no admite)
+      title "PATCH no se admite en /servicios/1" con about:blank; se esperaba Method Not Allowed
+ok    GET /servicios (sin credencial)
+FALLA POST /servicios (cuerpo en texto)
+      title "el cuerpo debe ser application/json, no text/plain" con about:blank; se esperaba Unsupported Media Type
+FALLA POST /servicios (cuerpo de más de 16 KiB)
+      title "el cuerpo pasa de 16384 bytes" con about:blank; se esperaba Content Too Large
+ok    POST /servicios (datos imposibles)
+ok    POST /servicios (nombre repetido)
+ok    PUT /servicios/1 (cambio sin If-Match)
+ok    GET /v0/servicios (versión retirada)
+ok    GET /servicios/1/informe (error interno)
+
+8 de 13 respuestas son Problem Details bien formados
+

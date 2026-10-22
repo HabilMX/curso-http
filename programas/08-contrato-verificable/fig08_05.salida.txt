@@ -1,0 +1,10 @@
+$ node fig08_05.ts
+  400  respuesta 413
+400 intentos
+
+$ for i in 1 2 3 4 5; do printf "corrida $i:"; node fig08_05.ts | grep "respuesta 413"; done
+corrida 1:  400  respuesta 413
+corrida 2:  400  respuesta 413
+corrida 3:  400  respuesta 413
+corrida 4:  400  respuesta 413
+corrida 5:  400  respuesta 413

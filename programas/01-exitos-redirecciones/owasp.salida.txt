@@ -1,0 +1,7 @@
+HTTP/2 308 
+location: /API-Security/editions/2023/en/0xa7-server-side-request-forgery
+HTTP/2 308 
+location: https://api-security.owasp.org/editions/2023/en/0xa7-server-side-request-forgery
+HTTP/2 301 
+location: https://api-security.owasp.org/editions/2023/en/0xa7-server-side-request-forgery/
+HTTP/2 200 

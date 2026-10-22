@@ -1,0 +1,266 @@
+$ curl -i http://127.0.0.1:18081/basura
+curl: (1) Received HTTP/0.9 when not allowed
+
+$ curl -i -m 1 http://127.0.0.1:18081/lento/3000
+curl: (28) Operation timed out after 1001 milliseconds with 0 bytes received
+
+$ curl -i http://127.0.0.1:18081/cortar
+curl: (52) Empty reply from server
+
+$ curl -i http://127.0.0.1:18080/servicios/1/informe -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/plain; charset=utf-8
+Content-Length: 63
+Date: Wed, 21 Oct 2026 13:19:06 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+error interno; referencia affc3b8a-5ab9-42f5-8b37-2face1f8eafd
+
+$ curl -i http://127.0.0.1:18080/servicios/1/informe -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 500 Internal Server Error
+Content-Type: text/plain; charset=utf-8
+Content-Length: 63
+Date: Wed, 21 Oct 2026 13:19:06 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+error interno; referencia bf0e3b0a-790f-4625-80e7-017b0bcfa403
+
+$ curl -i http://127.0.0.1:18080/servicios/1/salud -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 35
+Date: Wed, 21 Oct 2026 13:19:06 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicio":1,"codigo":200,"ms":8}
+
+$ curl -i http://127.0.0.1:18080/servicios/2/salud -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 35
+Date: Wed, 21 Oct 2026 13:19:06 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicio":2,"codigo":503,"ms":1}
+
+$ curl -i http://127.0.0.1:18080/servicios/4/salud -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 38
+Date: Wed, 21 Oct 2026 13:19:08 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicio":4,"codigo":200,"ms":1503}
+
+$ curl -i -w 'tardó %{time_total} s\n' http://127.0.0.1:18080/servicios/5/salud -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 504 Gateway Timeout
+Content-Type: text/plain; charset=utf-8
+Content-Length: 39
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el servicio 5 no respondió en 1000 ms
+tardó 1.004405 s
+
+$ curl -i -w 'tardó %{time_total} s\n' http://127.0.0.1:18080/servicios/6/salud -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 502 Bad Gateway
+Content-Type: text/plain; charset=utf-8
+Content-Length: 102
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el servicio 6 no dio una respuesta HTTP válida: cortó la conexión o respondió algo que no es HTTP
+tardó 0.002184 s
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"colgado","url":"http://127.0.0.1:18081/cortar"}'
+HTTP/1.1 201 Created
+Location: /servicios/7
+ETag: "7-1-6db25d01"
+Content-Type: application/json
+Content-Length: 83
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":7,"nombre":"colgado","url":"http://127.0.0.1:18081/cortar","limite_ms":2000}
+
+$ curl -i http://127.0.0.1:18080/servicios/7/salud -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 502 Bad Gateway
+Content-Type: text/plain; charset=utf-8
+Content-Length: 102
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el servicio 7 no dio una respuesta HTTP válida: cortó la conexión o respondió algo que no es HTTP
+
+$ curl -i -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"activo":true}'
+HTTP/1.1 403 Forbidden
+Content-Type: text/plain; charset=utf-8
+Content-Length: 59
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+solo quien opera el revisor puede cambiar el mantenimiento
+
+$ curl -i -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":true}'
+HTTP/1.1 204 No Content
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+$ curl -i http://127.0.0.1:18080/servicios -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 503 Service Unavailable
+Retry-After: 120
+Content-Type: text/plain; charset=utf-8
+Content-Length: 34
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el revisor está en mantenimiento
+
+$ curl -i http://127.0.0.1:18080/no-existe
+HTTP/1.1 503 Service Unavailable
+Retry-After: 120
+Content-Type: text/plain; charset=utf-8
+Content-Length: 34
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el revisor está en mantenimiento
+
+$ curl -i -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":false}'
+HTTP/1.1 204 No Content
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+$ curl -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios -H 'Authorization: Bearer lectura-a'
+200
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60
+Content-Type: text/plain; charset=utf-8
+Content-Length: 45
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+ya pediste 3 revisiones en el último minuto
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/4/revisiones -H 'Authorization: Bearer admin'
+202
+
+$ curl -i http://127.0.0.1:18080/servicios/1/salud -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 429 Too Many Requests
+Retry-After: 58
+Content-Type: text/plain; charset=utf-8
+Content-Length: 52
+Date: Wed, 21 Oct 2026 13:19:09 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+ya pediste 3 consultas en vivo en el último minuto
+
+$ for id in 1 2 3 4 5 6 7 8 9 10; do curl -sS -o /dev/null -w '%{http_code} ' -X POST http://127.0.0.1:18080/servicios/$id/revisiones -H 'Authorization: Bearer escritura-b'; done; echo
+404 404 202 429 429 429 429 429 429 429 
+
+$ sleep 20
+$ curl -i -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 429 Too Many Requests
+Retry-After: 40
+Content-Type: text/plain; charset=utf-8
+Content-Length: 45
+Date: Wed, 21 Oct 2026 13:19:29 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+ya pediste 3 revisiones en el último minuto
+
+$ curl http://127.0.0.1:18080/revisiones/1 -H 'Authorization: Bearer lectura-a'
+{"id":1,"servicio":2,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":503,"ms":1,"detalle":"503 (reintentar en 120 s)"}}
+
+$ curl http://127.0.0.1:18080/revisiones/4 -H 'Authorization: Bearer lectura-a'
+{"id":4,"servicio":4,"estado":"terminada","resultado":{"estado":"LENTO","codigo":200,"ms":1501,"detalle":"200"}}
+
+$ curl -i http://127.0.0.1:18080/servicios/2/informe -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 54
+Date: Wed, 21 Oct 2026 13:19:29 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicio":2,"revisiones":3,"ultimo_estado":"CAIDO"}
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios/1/informe
+error affc3b8a-5ab9-42f5-8b37-2face1f8eafd en GET /servicios/1/informe: TypeError: Cannot read properties of undefined (reading 'resultado')
+    at Object.informe [as manejador] (file://<carpeta>/servicios.ts:304:28)
+    at atender (file://<carpeta>/rutas.ts:104:16)
+    at atenderSinFiltrar (file://<carpeta>/servidor.ts:23:11)
+    at Server.<anonymous> (file://<carpeta>/servidor.ts:35:44)
+GET /servicios/1/informe
+error bf0e3b0a-790f-4625-80e7-017b0bcfa403 en GET /servicios/1/informe: TypeError: Cannot read properties of undefined (reading 'resultado')
+    at Object.informe [as manejador] (file://<carpeta>/servicios.ts:304:28)
+    at atender (file://<carpeta>/rutas.ts:104:16)
+    at atenderSinFiltrar (file://<carpeta>/servidor.ts:23:11)
+    at Server.<anonymous> (file://<carpeta>/servidor.ts:35:44)
+GET /servicios/1/salud
+GET /servicios/2/salud
+GET /servicios/4/salud
+GET /servicios/5/salud
+GET /servicios/6/salud
+POST /servicios
+GET /servicios/7/salud
+PUT /mantenimiento
+PUT /mantenimiento
+operación: mantenimiento encendido
+GET /servicios
+GET /no-existe
+PUT /mantenimiento
+operación: mantenimiento apagado
+GET /servicios
+POST /servicios/2/revisiones
+POST /servicios/2/revisiones
+POST /servicios/2/revisiones
+POST /servicios/2/revisiones
+POST /servicios/4/revisiones
+GET /servicios/1/salud
+POST /servicios/1/revisiones
+POST /servicios/2/revisiones
+POST /servicios/3/revisiones
+POST /servicios/4/revisiones
+POST /servicios/5/revisiones
+POST /servicios/6/revisiones
+POST /servicios/7/revisiones
+POST /servicios/8/revisiones
+POST /servicios/9/revisiones
+POST /servicios/10/revisiones
+POST /servicios/2/revisiones
+GET /revisiones/1
+GET /revisiones/4
+GET /servicios/2/informe

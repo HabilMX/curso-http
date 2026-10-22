@@ -1,0 +1,160 @@
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 409 Conflict
+Content-Type: text/plain; charset=utf-8
+Content-Length: 53
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+ya existe un servicio llamado catalogo: /servicios/1
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 422 Unprocessable Content
+Content-Type: text/plain; charset=utf-8
+Content-Length: 47
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+nombre: debe ser un texto de 1 a 40 caracteres
+
+$ curl -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'If-Match: "1-1-00000000"' -d '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 412 Precondition Failed
+Content-Type: text/plain; charset=utf-8
+Content-Length: 115
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+tu etiqueta ya no es la vigente: el servicio cambió o el revisor se reinició; vuelve a leerlo antes de cambiarlo
+
+$ curl -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: text/plain' -d 'catalogo'
+HTTP/1.1 415 Unsupported Media Type
+Accept: application/json
+Content-Type: text/plain; charset=utf-8
+Content-Length: 51
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el cuerpo debe ser application/json, no text/plain
+
+$ curl -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: text/plain' -H 'If-Match: "1-0-0"' -d 'catalogo'
+HTTP/1.1 415 Unsupported Media Type
+Accept: application/json
+Content-Type: text/plain; charset=utf-8
+Content-Length: 51
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el cuerpo debe ser application/json, no text/plain
+
+$ curl -i http://127.0.0.1:18080/servicios/3 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 24
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe el servicio 3
+
+$ curl -i http://127.0.0.1:18080/v0/servicios
+HTTP/1.1 410 Gone
+Content-Type: text/plain; charset=utf-8
+Content-Length: 74
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+la versión 0 de la API se retiró el 31 de enero de 2026; usa /servicios
+
+$ curl -i -X DELETE http://127.0.0.1:18080/servicios/3 -H 'Authorization: Bearer escritura-b'
+HTTP/1.1 204 No Content
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+$ curl -i http://127.0.0.1:18080/servicios/3 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 24
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe el servicio 3
+
+$ ANTES=$(curl -sS -o /dev/null -w '%header{etag}' http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'); echo "ANTES=$ANTES"
+ANTES="1-1-caba5fd2"
+
+$ curl -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H "If-Match: $ANTES" -d '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}'
+HTTP/1.1 412 Precondition Failed
+Content-Type: text/plain; charset=utf-8
+Content-Length: 115
+Date: Wed, 21 Oct 2026 13:18:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+tu etiqueta ya no es la vigente: el servicio cambió o el revisor se reinició; vuelve a leerlo antes de cambiarlo
+
+$ AHORA=$(curl -sS -o /dev/null -w '%header{etag}' http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'); echo "AHORA=$AHORA"
+AHORA="1-1-e35ad556"
+
+$ curl -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'If-Match: "1-7-00000000"' -d '{"nombre":"","url":"ftp://archivos"}'
+HTTP/1.1 412 Precondition Failed
+Content-Type: text/plain; charset=utf-8
+Content-Length: 115
+Date: Wed, 21 Oct 2026 13:18:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+tu etiqueta ya no es la vigente: el servicio cambió o el revisor se reinició; vuelve a leerlo antes de cambiarlo
+
+$ curl -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H "If-Match: $AHORA" -d '{"nombre":"","url":"ftp://archivos"}'
+HTTP/1.1 422 Unprocessable Content
+Content-Type: text/plain; charset=utf-8
+Content-Length: 89
+Date: Wed, 21 Oct 2026 13:18:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+nombre: debe ser un texto de 1 a 40 caracteres
+url: debe ser una dirección http o https
+
+$ curl -sS -o /dev/null -w '%header{etag}\n' http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'
+"1-1-e35ad556"
+
+$ node fig03_03.ts /v1/servicios
+/v1/servicios: 200
+desaprobada desde: 2026-07-01T00:00:00.000Z
+deja de responder: 2027-01-31T00:00:00.000Z
+dónde leer más:   <https://revisor.example/docs/migrar-de-v1>; rel="deprecation"; type="text/html"
+orden correcto: primero se desaprueba, luego se retira
+
+$ node fig03_03.ts /servicios
+/servicios: 200
+sin avisos: la ruta no anuncia que se vaya a retirar
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios
+POST /servicios
+PUT /servicios/1
+PUT /servicios/1
+PUT /servicios/1
+GET /servicios/3
+GET /v0/servicios
+DELETE /servicios/3
+GET /servicios/3
+GET /servicios/1
+revisor en http://127.0.0.1:18080
+PUT /servicios/1
+GET /servicios/1
+PUT /servicios/1
+PUT /servicios/1
+GET /servicios/1
+GET /v1/servicios
+GET /servicios

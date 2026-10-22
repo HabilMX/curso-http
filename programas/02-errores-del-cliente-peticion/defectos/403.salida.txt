@@ -1,0 +1,44 @@
+$ curl -i http://127.0.0.1:18080/servicios/3 -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 403 Forbidden
+Content-Type: text/plain; charset=utf-8
+Content-Length: 32
+Date: Wed, 21 Oct 2026 13:18:14 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el servicio 3 es de otro equipo
+
+$ curl -i http://127.0.0.1:18080/servicios/99 -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 25
+Date: Wed, 21 Oct 2026 13:18:14 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe el servicio 99
+
+$ node fig02_02.ts lectura-a
+servicio 1: 200 {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+servicio 2: 200 {"id":2,"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/503","limite_ms":2000}
+servicio 3: 403 el servicio 3 es de otro equipo
+servicio 4: 404 no existe el servicio 4
+servicio 5: 404 no existe el servicio 5
+servicio 6: 404 no existe el servicio 6
+
+respuestas distintas: 3
+  1, 2               → 200 con datos
+  3                  → 403 el servicio N es de otro equipo
+  4, 5, 6            → 404 no existe el servicio N
+más de dos respuestas: lo que no es tuyo ya no se ve todo igual
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios/3
+GET /servicios/99
+GET /servicios/1
+GET /servicios/2
+GET /servicios/3
+GET /servicios/4
+GET /servicios/5
+GET /servicios/6

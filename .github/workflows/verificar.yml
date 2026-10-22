@@ -1,0 +1,90 @@
+name: Verificar el curso
+
+# Cada programa del curso se revisa con tsc en modo estricto en cada cambio,
+# con las mismas banderas que enseñan las lecciones. Esta corrida es pública:
+# cualquiera puede abrirla y ver el resultado de cada paso.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: El medidor de profundidad sabe fallar (control positivo)
+        run: herramientas/autoprueba-medir-profundidad.sh
+
+      - name: La profundidad se mide (piso de 3,000 palabras por lección, mediana de 4,000)
+        run: herramientas/medir-profundidad.sh
+
+      - name: Instalar TypeScript y los tipos de Node (versiones fijadas, fuera del repositorio)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/tsc"
+          cd "$RUNNER_TEMP/tsc"
+          npm init -y > /dev/null
+          npm install --no-audit --no-fund --save-exact typescript@7.0.2 @types/node@24.19.1
+          node --version
+          npx --no-install tsc --version
+
+      - name: Revisar cada programa con tsc estricto
+        run: |
+          set -euo pipefail
+          TSC="$RUNNER_TEMP/tsc/node_modules/.bin/tsc"
+          TIPOS="$RUNNER_TEMP/tsc/node_modules/@types"
+          revisar() {
+            "$TSC" --strict --noEmit --target esnext --module nodenext \
+              --erasableSyntaxOnly --verbatimModuleSyntax --allowImportingTsExtensions \
+              --typeRoots "$TIPOS" --types node *.ts
+          }
+          # Un defecto o un ejercicio que trae SOLO archivos que reemplazan a los del
+          # revisor de su lección (figNN_01/) se revisa puesto encima de una copia de
+          # ese revisor, que es como la lección lo pide. Lo demás se revisa en su lugar.
+          es_parche() {
+            local carpeta="$1" base="$2" ts
+            [ -n "$base" ] && [ "$carpeta/" != "$base" ] || return 1
+            for ts in "$carpeta"/*.ts; do
+              [ -f "$base$(basename "$ts")" ] || return 1
+            done
+          }
+          completas=0
+          parches=0
+          while IFS= read -r carpeta; do
+            echo "::group::$carpeta"
+            leccion="$(echo "$carpeta" | cut -d/ -f1-2)"
+            base=""
+            bases=("$leccion"/fig*/)
+            if [ "${#bases[@]}" -eq 1 ] && [ -d "${bases[0]}" ]; then base="${bases[0]}"; fi
+            if es_parche "$carpeta" "$base"; then
+              copia="$(mktemp -d "$RUNNER_TEMP/parche.XXXXXX")"
+              cp -R "$base". "$copia/"
+              cp "$carpeta"/*.ts "$copia/"
+              echo "sobre $base: $(cd "$carpeta" && ls *.ts | tr '\n' ' ')"
+              (cd "$copia" && revisar)
+              parches=$((parches + 1))
+            else
+              (cd "$carpeta" && ls *.ts | tr '\n' ' ' && echo && revisar)
+              completas=$((completas + 1))
+            fi
+            echo "::endgroup::"
+          done < <(find programas -name '*.ts' -not -path '*/node_modules/*' -exec dirname {} \; | sort -u)
+          if [ "$completas" -eq 0 ]; then
+            echo "No se encontró ningún programa: este paso no verificó nada."
+            exit 1
+          fi
+          echo "Revisadas con tsc estricto: $completas carpetas completas y $parches defectos o ejercicios sobre su revisor"
+
+      - name: Nota sobre la revisión previa a publicar
+        run: |
+          echo "La revisión de material no publicable (rutas internas, nombres reservados,"
+          echo "direcciones de la infraestructura) se corre ANTES de publicar, con la lista"
+          echo "de patrones que vive en el repositorio de trabajo y no se publica."

@@ -1,0 +1,135 @@
+$ node tabla23.ts
+CÓDIGO  ACCIÓN        REINTENTA  ESPERA  MOTIVO
+200     seguir        no         —       salió bien
+201     seguir        no         —       se creó; la dirección viene en Location
+202     seguir        no         —       se aceptó; el seguimiento viene en Location
+204     seguir        no         —       salió bien y no hay nada que leer
+301     corregir      no         —       la dirección cambió para siempre: actualiza la configuración
+304     seguir        no         —       no cambió: usa la copia que ya tienes
+308     corregir      no         —       la dirección cambió para siempre: actualiza la configuración
+400     corregir      no         —       la petición no se puede leer
+401     reautenticar  no         —       falta una credencial válida
+403     rendirse      no         —       la credencial no tiene permiso: lo resuelve una persona
+404     rendirse      no         —       no existe (o no te lo muestran)
+405     corregir      no         —       ese método no se admite: mira Allow
+409     reconciliar   no         —       choca con el estado actual: relee y decide
+410     rendirse      no         —       se retiró y no va a volver: dalo de baja
+412     reconciliar   no         —       tu etiqueta ya no es la vigente: relee y vuelve a aplicar tu cambio
+415     corregir      no         —       el formato no se admite: mira Accept
+422     corregir      no         —       se entendió, pero los datos no se pueden cumplir
+428     corregir      no         —       falta la condición: manda If-Match
+429     esperar       sí         30 s    demasiadas peticiones: espera lo que diga Retry-After
+500     rendirse      no         —       falla del servidor: repórtala con su instance
+502     esperar       sí         —       falló lo que está detrás: reintenta solo si la operación es idempotente
+503     esperar       sí         120 s   no está disponible: espera lo que diga Retry-After
+504     esperar       sí         —       lo de atrás no respondió a tiempo: reintenta solo si es idempotente
+
+$ curl -i http://127.0.0.1:18081/codigo/409
+HTTP/1.1 409 Conflict
+Content-Type: text/plain; charset=utf-8
+Content-Length: 39
+Date: Wed, 21 Oct 2026 22:08:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+409 Conflict
+lo pediste en /codigo/409
+
+$ node revisar.ts
+SERVICIO     RESPUESTA          ACCIÓN        MOTIVO
+catalogo     200 en 6 ms        seguir        salió bien
+pagos        503 en 4 ms        esperar       no está disponible: espera lo que diga Retry-After
+inventario   200 en 1503 ms     seguir        salió bien
+reportes     tiempo-agotado     esperar       tiempo-agotado
+facturacion  respuesta-invalida esperar       respuesta-invalida
+
+$ curl -i http://127.0.0.1:18080/servicios -H 'Authorization: Bearer inventada'
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer realm="revisor", error="invalid_token"
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 180
+Date: Wed, 21 Oct 2026 22:08:38 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/credencial-invalida","title":"Falta una credencial válida","status":401,"detail":"la credencial no es válida","instance":"/servicios"}
+
+$ node revisar.ts inventada
+la API respondió 401 (https://revisor.example/problemas/credencial-invalida): reautenticar, falta una credencial válida
+
+$ curl -o /dev/null -w '%{http_code}\n' -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":true}'
+204
+
+$ curl -i http://127.0.0.1:18080/servicios -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 503 Service Unavailable
+Retry-After: 120
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 188
+Date: Wed, 21 Oct 2026 22:08:38 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/en-mantenimiento","title":"El revisor está en mantenimiento","status":503,"detail":"el revisor está en mantenimiento","instance":"/servicios"}
+
+$ node revisar.ts
+la API respondió 503 (https://revisor.example/problemas/en-mantenimiento): esperar, el revisor está en mantenimiento: espera lo que diga Retry-After
+  pide esperar 120 s, más que el tope de 5 s: lo intento más tarde
+
+$ curl -o /dev/null -w '%{http_code}\n' -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":false}'
+204
+
+$ node por-type.ts
+409 https://revisor.example/problemas/llave-en-curso
+  solo con el código: reconciliar (choca con el estado actual: relee y decide)
+  con el type:        esperar (la petición original sigue en curso: espera y repite con la misma llave)
+409 https://revisor.example/problemas/nombre-repetido
+  solo con el código: reconciliar (choca con el estado actual: relee y decide)
+  con el type:        reconciliar (ya existe: mira el miembro existente antes de crear otro)
+
+--- terminal del laboratorio:
+laboratorio en http://127.0.0.1:18081/codigo/NNN
+GET /codigo/200
+GET /codigo/201
+GET /codigo/202
+GET /codigo/204
+GET /codigo/301
+GET /codigo/304
+GET /codigo/308
+GET /codigo/400
+GET /codigo/401
+GET /codigo/403
+GET /codigo/404
+GET /codigo/405
+GET /codigo/409
+GET /codigo/410
+GET /codigo/412
+GET /codigo/415
+GET /codigo/422
+GET /codigo/428
+GET /codigo/429
+GET /codigo/500
+GET /codigo/502
+GET /codigo/503
+GET /codigo/504
+GET /codigo/409
+GET /codigo/200
+GET /codigo/503
+GET /lento/1500
+GET /lento/3000
+GET /basura
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios
+GET /servicios
+GET /servicios
+PUT /mantenimiento
+operación: mantenimiento encendido
+GET /servicios
+GET /servicios
+PUT /mantenimiento
+operación: mantenimiento apagado
+POST /servicios
+POST /servicios
+POST /servicios

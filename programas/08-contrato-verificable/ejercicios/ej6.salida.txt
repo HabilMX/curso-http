@@ -1,0 +1,48 @@
+$ node fig08_06.ts 100
+n=100  mediana=60 ms  p95=95 ms  máximo=225 ms
+arranques de más de 500 ms: 0   de más de 1000 ms: 0
+
+$ # con 20 procesos que no hacen más que girar (dos por núcleo)
+$ node fig08_06.ts 100
+n=100  mediana=85 ms  p95=121 ms  máximo=166 ms
+arranques de más de 500 ms: 0   de más de 1000 ms: 0
+
+$ # la matriz 8 veces seguidas, con esos mismos procesos girando
+$ ./fig08_08.sh 8 espera-fija
+corrida 1: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 2: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 3: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 4: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 5: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 6: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 7: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 8: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+espera-fija/matriz23.ts: 0 de 8 corridas fallaron
+$ ./fig08_08.sh 8 fig08_01
+corrida 1: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 2: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 3: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 4: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 5: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 6: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 7: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 8: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+fig08_01/matriz23.ts: 0 de 8 corridas fallaron
+
+# el control negativo: el arranque de servidor.ts y pasarela.ts retrasado 700 ms
+$ ./arranque-lento.sh espera-fija   # la matriz con esperas fijas (defectos/espera-fija/)
+--- espera-fija/matriz23.ts con un arranque lento de 700 ms (lo que importa de su salida):
+FALLA la pasarela reenvía Content-Length; sin revisor responde 502 y sigue viva; alta-segura termina al agotar los intentos, también sin conexión: pasarela sin revisor: 0 null
+40 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+(código de salida: 1)
+
+$ ./arranque-lento.sh fig08_01      # la matriz de la lección, con esperarPuerto
+--- fig08_01/matriz23.ts con un arranque lento de 700 ms (lo que importa de su salida):
+41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+(código de salida: 0)
+
+# y con un revisor de antes que se te olvidó apagar en el 18080
+$ node -e 'require("http").createServer((q, r) => r.end("viejo")).listen(18080, "127.0.0.1")' &
+$ cd ej6 && node matriz23.ts
+puerto 18080 ocupado; apaga lo que lo usa
+(código de salida: 2)

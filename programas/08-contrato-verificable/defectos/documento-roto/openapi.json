@@ -1,0 +1,1189 @@
+{ "x-defecto": "DEFECTO A PROPÓSITO (defectos/documento-roto): esta copia está mal a propósito, una referencia apunta a una respuesta que no existe y al 204 le falta su description. No la uses como modelo.",
+  "openapi": "3.1.1",
+  "info": {
+    "title": "API del revisor",
+    "version": "1.0.0",
+    "summary": "Contrato verificable del curso de HTTP de Hábil.",
+    "description": "info.version es la versión de ESTE documento, no la de la API. La API vigente vive en la raíz (/servicios); la v1 está desaprobada y la v0 retirada.",
+    "license": {
+      "name": "CC BY-SA 4.0",
+      "identifier": "CC-BY-SA-4.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:18080"
+    }
+  ],
+  "security": [
+    {
+      "credencial": []
+    }
+  ],
+  "paths": {
+    "/servicios": {
+      "get": {
+        "summary": "Listar los servicios del equipo",
+        "responses": {
+          "200": {
+            "description": "La lista.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lista"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E4O1"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        }
+      },
+      "post": {
+        "summary": "Dar de alta un servicio",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosServicio"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Creado.",
+            "headers": {
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Servicio"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "409": {
+            "$ref": "#/components/responses/E409"
+          },
+          "415": {
+            "$ref": "#/components/responses/E415"
+          },
+          "422": {
+            "$ref": "#/components/responses/E422"
+          },
+          "413": {
+            "$ref": "#/components/responses/E413"
+          }
+        }
+      }
+    },
+    "/servicios/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "summary": "Consultar un servicio",
+        "parameters": [
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "description": "«*» o una lista de etiquetas separadas por comas. Se compara en débil (RFC 9110, secciones 13.1.2 y 8.8.3.2): W/\"1-1\" coincide con \"1-1\". Si alguna coincide, 304."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "El servicio.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Servicio"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "No cambió; sin cuerpo.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "410": {
+            "$ref": "#/components/responses/E410"
+          }
+        }
+      },
+      "put": {
+        "summary": "Cambiar un servicio sin pisar otro cambio",
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "«*» o una lista de etiquetas separadas por comas. Se compara en fuerte (RFC 9110, secciones 13.1.1 y 8.8.3.2): una etiqueta W/ nunca coincide. «*» coincide si el servicio existe. Si ninguna coincide, 412."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosServicio"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cambiado.",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Servicio"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "409": {
+            "$ref": "#/components/responses/E409"
+          },
+          "410": {
+            "$ref": "#/components/responses/E410"
+          },
+          "412": {
+            "$ref": "#/components/responses/E412"
+          },
+          "415": {
+            "$ref": "#/components/responses/E415"
+          },
+          "422": {
+            "$ref": "#/components/responses/E422"
+          },
+          "428": {
+            "$ref": "#/components/responses/E428"
+          },
+          "413": {
+            "$ref": "#/components/responses/E413"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Retirar un servicio",
+        "responses": {
+          "204": {},
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "410": {
+            "$ref": "#/components/responses/E410"
+          }
+        }
+      }
+    },
+    "/servicios/{id}/revisiones": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "post": {
+        "summary": "Pedir una revisión",
+        "responses": {
+          "202": {
+            "description": "Aceptada; el seguimiento está en Location.",
+            "headers": {
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Revision"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "410": {
+            "$ref": "#/components/responses/E410"
+          },
+          "422": {
+            "$ref": "#/components/responses/E422"
+          },
+          "429": {
+            "$ref": "#/components/responses/E429"
+          }
+        }
+      }
+    },
+    "/servicios/{id}/salud": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "summary": "Consultar el servicio en este momento (el revisor hace de pasarela)",
+        "responses": {
+          "200": {
+            "description": "Lo que respondió el servicio, sea cual sea su código.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Salud"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "410": {
+            "$ref": "#/components/responses/E410"
+          },
+          "422": {
+            "$ref": "#/components/responses/E422"
+          },
+          "502": {
+            "$ref": "#/components/responses/E502"
+          },
+          "504": {
+            "$ref": "#/components/responses/E504"
+          },
+          "429": {
+            "$ref": "#/components/responses/E429Salud"
+          }
+        }
+      }
+    },
+    "/servicios/{id}/informe": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "summary": "Resumen de las revisiones (trae un defecto a propósito: sin revisiones responde 500)",
+        "responses": {
+          "200": {
+            "description": "El resumen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Informe"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "410": {
+            "$ref": "#/components/responses/E410"
+          },
+          "500": {
+            "$ref": "#/components/responses/E500"
+          }
+        }
+      }
+    },
+    "/revisiones/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "summary": "Seguimiento de una revisión",
+        "responses": {
+          "200": {
+            "description": "La revisión; mientras está pendiente trae Retry-After.",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/Retry-After"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Revision"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          }
+        }
+      }
+    },
+    "/mantenimiento": {
+      "put": {
+        "summary": "Encender o apagar el mantenimiento (solo admin)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "activo"
+                ],
+                "properties": {
+                  "activo": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Hecho."
+          },
+          "400": {
+            "$ref": "#/components/responses/E400"
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "403": {
+            "$ref": "#/components/responses/E403"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "415": {
+            "$ref": "#/components/responses/E415"
+          },
+          "422": {
+            "$ref": "#/components/responses/E422"
+          },
+          "413": {
+            "$ref": "#/components/responses/E413"
+          }
+        }
+      }
+    },
+    "/viejo/servicios": {
+      "get": {
+        "summary": "Ruta vieja",
+        "security": [],
+        "responses": {
+          "301": {
+            "description": "Se mudó a /servicios. Un POST seguido con 301 suele volverse GET.",
+            "headers": {
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Ruta vieja",
+        "security": [],
+        "responses": {
+          "301": {
+            "description": "Se mudó a /servicios. Un POST seguido con 301 suele volverse GET.",
+            "headers": {
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/servicios": {
+      "get": {
+        "summary": "Ruta vieja",
+        "security": [],
+        "responses": {
+          "308": {
+            "description": "Se mudó a /servicios; el método y el cuerpo se conservan.",
+            "headers": {
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Ruta vieja",
+        "security": [],
+        "responses": {
+          "308": {
+            "description": "Se mudó a /servicios; el método y el cuerpo se conservan.",
+            "headers": {
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/servicios": {
+      "get": {
+        "summary": "Versión 1, desaprobada",
+        "deprecated": true,
+        "responses": {
+          "200": {
+            "description": "La lista en la forma de la v1.",
+            "headers": {
+              "Deprecation": {
+                "$ref": "#/components/headers/Deprecation"
+              },
+              "Sunset": {
+                "$ref": "#/components/headers/Sunset"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          }
+        }
+      }
+    },
+    "/v1/servicios/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "get": {
+        "summary": "Versión 1, desaprobada",
+        "deprecated": true,
+        "responses": {
+          "200": {
+            "description": "El servicio en la forma de la v1.",
+            "headers": {
+              "Deprecation": {
+                "$ref": "#/components/headers/Deprecation"
+              },
+              "Sunset": {
+                "$ref": "#/components/headers/Sunset"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/E401"
+          },
+          "405": {
+            "$ref": "#/components/responses/E405"
+          },
+          "503": {
+            "$ref": "#/components/responses/E503"
+          },
+          "404": {
+            "$ref": "#/components/responses/E404"
+          },
+          "410": {
+            "$ref": "#/components/responses/E410"
+          }
+        }
+      }
+    },
+    "/v0/servicios": {
+      "get": {
+        "summary": "Versión 0, retirada",
+        "deprecated": true,
+        "security": [],
+        "responses": {
+          "410": {
+            "$ref": "#/components/responses/E410"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "credencial": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "parameters": {
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "description": "Patrón documentado por esta API, NO un estándar: draft-ietf-httpapi-idempotency-key-header-07 venció el 18 de abril de 2026 sin publicarse como RFC.",
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "headers": {
+      "Location": {
+        "schema": {
+          "type": "string",
+          "format": "uri-reference"
+        }
+      },
+      "ETag": {
+        "description": "Etiqueta fuerte \"id-versión-arranque\". Cambia con cada cambio del servicio y con cada arranque del revisor (RFC 9110, sección 8.8.1).",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Retry-After": {
+        "description": "Segundos o fecha HTTP (RFC 9110, sección 10.2.3).",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "WWW-Authenticate": {
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Allow": {
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Accept": {
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Deprecation": {
+        "description": "RFC 9745: fecha de campo estructurado (@segundos).",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Sunset": {
+        "description": "RFC 8594 (informativo): fecha HTTP; nunca anterior a Deprecation.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Link": {
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "E400": {
+        "description": "El cuerpo no se puede leer (type cuerpo-ilegible).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E401": {
+        "description": "Falta una credencial válida (type credencial-invalida).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        },
+        "headers": {
+          "WWW-Authenticate": {
+            "$ref": "#/components/headers/WWW-Authenticate"
+          }
+        }
+      },
+      "E403": {
+        "description": "La credencial no tiene permiso (type permiso-insuficiente).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E404": {
+        "description": "No existe, o es de otro equipo y se esconde a propósito (type servicio-inexistente o about:blank).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E405": {
+        "description": "El método no se admite en esta ruta (type about:blank).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        },
+        "headers": {
+          "Allow": {
+            "$ref": "#/components/headers/Allow"
+          }
+        }
+      },
+      "E409": {
+        "description": "Choca con el estado actual (type nombre-repetido o llave-en-curso).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E410": {
+        "description": "Se retiró y no va a volver (type servicio-retirado o version-retirada).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E412": {
+        "description": "Ninguna etiqueta de If-Match coincide con la vigente en comparación fuerte (type etiqueta-vencida).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E415": {
+        "description": "El cuerpo no es application/json (type about:blank).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        },
+        "headers": {
+          "Accept": {
+            "$ref": "#/components/headers/Accept"
+          }
+        }
+      },
+      "E422": {
+        "description": "Se leyó, pero no se puede cumplir (type datos-invalidos, destino-prohibido o llave-reutilizada).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E428": {
+        "description": "Falta If-Match (type falta-condicion).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E429": {
+        "description": "Demasiadas revisiones de la misma credencial en el último minuto (type demasiadas-revisiones).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        },
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        }
+      },
+      "E500": {
+        "description": "Error interno; instance es urn:uuid:… y sirve para encontrarlo en la bitácora (type error-interno).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E502": {
+        "description": "El servicio consultado no dio una respuesta HTTP válida: cortó la conexión, respondió algo que no es HTTP o no se pudo conectar (type respuesta-invalida).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E503": {
+        "description": "El revisor está en mantenimiento (type en-mantenimiento).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        },
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        }
+      },
+      "E504": {
+        "description": "El servicio consultado no respondió a tiempo (type servicio-lento).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E413": {
+        "description": "El cuerpo pasa de 16 KiB (type about:blank). La conexión se cierra al responder.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        }
+      },
+      "E429Salud": {
+        "description": "Demasiadas consultas en vivo de la misma credencial en el último minuto (type demasiadas-consultas).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problema"
+            }
+          }
+        },
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/Retry-After"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "DatosServicio": {
+        "type": "object",
+        "required": [
+          "nombre",
+          "url"
+        ],
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "http o https; no puede apuntar a direcciones privadas ni reservadas (SSRF)."
+          },
+          "limite_ms": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 10000,
+            "default": 2000
+          }
+        }
+      },
+      "Servicio": {
+        "type": "object",
+        "required": [
+          "id",
+          "nombre",
+          "url",
+          "limite_ms"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nombre": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "limite_ms": {
+            "type": "integer"
+          }
+        }
+      },
+      "Lista": {
+        "type": "object",
+        "required": [
+          "servicios"
+        ],
+        "properties": {
+          "servicios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Servicio"
+            }
+          }
+        }
+      },
+      "Resultado": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "estado": {
+            "enum": [
+              "ARRIBA",
+              "LENTO",
+              "CAIDO"
+            ]
+          },
+          "codigo": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ms": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "detalle": {
+            "type": "string"
+          }
+        }
+      },
+      "Revision": {
+        "type": "object",
+        "required": [
+          "id",
+          "servicio",
+          "estado",
+          "resultado"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "servicio": {
+            "type": "integer"
+          },
+          "estado": {
+            "enum": [
+              "pendiente",
+              "terminada"
+            ]
+          },
+          "resultado": {
+            "$ref": "#/components/schemas/Resultado"
+          }
+        }
+      },
+      "Salud": {
+        "type": "object",
+        "properties": {
+          "servicio": {
+            "type": "integer"
+          },
+          "codigo": {
+            "type": "integer"
+          },
+          "ms": {
+            "type": "integer"
+          }
+        }
+      },
+      "Informe": {
+        "type": "object",
+        "properties": {
+          "servicio": {
+            "type": "integer"
+          },
+          "revisiones": {
+            "type": "integer"
+          },
+          "ultimo_estado": {
+            "type": "string"
+          }
+        }
+      },
+      "Problema": {
+        "type": "object",
+        "description": "Problem Details (RFC 9457). type es el identificador estable; title y detail son para personas.",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "instance"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "examples": [
+              "https://revisor.example/problemas/servicio-inexistente",
+              "about:blank"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 599
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri-reference"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "detail": {
+                  "type": "string"
+                },
+                "pointer": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "existente": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

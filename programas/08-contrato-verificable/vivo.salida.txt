@@ -1,0 +1,58 @@
+$ curl -i http://127.0.0.1:18080/revisiones/99 -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 177
+Date: Wed, 21 Oct 2026 22:36:23 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/revision-inexistente","title":"La revisión no existe","status":404,"detail":"no existe la revisión 99","instance":"/revisiones/99"}
+
+$ curl -i http://127.0.0.1:18080/servicios/99 -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 174
+Date: Wed, 21 Oct 2026 22:36:23 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/servicio-inexistente","title":"El servicio no existe","status":404,"detail":"no existe el servicio 99","instance":"/servicios/99"}
+
+$ curl -i http://127.0.0.1:18080/v1/servicios/1 -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 200 OK
+Deprecation: @1782864000
+Sunset: Sun, 31 Jan 2027 00:00:00 GMT
+Link: <https://revisor.example/docs/migrar-de-v1>; rel="deprecation"; type="text/html"
+Content-Type: application/json
+Content-Length: 88
+Date: Wed, 21 Oct 2026 22:36:23 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"nombre":"catalogo","direccion":"http://127.0.0.1:18081/codigo/200","limite":2}
+
+$ curl -i http://127.0.0.1:18080/v0/servicios
+HTTP/1.1 410 Gone
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 231
+Date: Wed, 21 Oct 2026 22:36:23 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/version-retirada","title":"Esa versión de la API se retiró","status":410,"detail":"la versión 0 de la API se retiró el 31 de enero de 2026; usa /servicios","instance":"/v0/servicios"}
+
+$ curl -i -X PATCH http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 405 Method Not Allowed
+Allow: GET, HEAD, PUT, DELETE
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 137
+Date: Wed, 21 Oct 2026 22:36:23 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"about:blank","title":"Method Not Allowed","status":405,"detail":"PATCH no se admite en /servicios/1","instance":"/servicios/1"}
+

@@ -1,0 +1,49 @@
+$ curl -i http://127.0.0.1:18080/servicios/99 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 25
+Date: Wed, 21 Oct 2026 13:18:39 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe el servicio 99
+
+$ curl -i -X PATCH http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 405 Method Not Allowed
+Allow: GET, HEAD, PUT, DELETE
+Content-Type: text/plain; charset=utf-8
+Content-Length: 35
+Date: Wed, 21 Oct 2026 13:18:39 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+PATCH no se admite en /servicios/1
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"","url":"ftp://archivos","limite_ms":5}'
+HTTP/1.1 422 Unprocessable Content
+Content-Type: text/plain; charset=utf-8
+Content-Length: 137
+Date: Wed, 21 Oct 2026 13:18:39 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+nombre: debe ser un texto de 1 a 40 caracteres
+url: debe ser una dirección http o https
+limite_ms: debe ser un entero entre 100 y 10000
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 409 Conflict
+Content-Type: text/plain; charset=utf-8
+Content-Length: 50
+Date: Wed, 21 Oct 2026 13:18:39 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+ya existe un servicio llamado pagos: /servicios/2
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios/99
+PATCH /servicios/1
+POST /servicios
+POST /servicios

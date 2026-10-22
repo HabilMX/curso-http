@@ -1,0 +1,38 @@
+$ npx redocly lint openapi.json --format=stylish
+No configurations were provided -- using built in recommended configuration by default.
+
+validating openapi.json...
+openapi.json:
+  25:7   warning  operation-operationId   Operation object should contain `operationId` field.
+  49:7   warning  operation-operationId   Operation object should contain `operationId` field.
+  127:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  180:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  260:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  299:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  356:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  411:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  457:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  491:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  540:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  543:9  warning  operation-2xx-response  Operation must have at least one `2XX` response.
+  543:9  warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  554:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  557:9  warning  operation-2xx-response  Operation must have at least one `2XX` response.
+  557:9  warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  570:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  573:9  warning  operation-2xx-response  Operation must have at least one `2XX` response.
+  573:9  warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  584:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  587:9  warning  operation-2xx-response  Operation must have at least one `2XX` response.
+  587:9  warning  operation-4xx-response  Operation must have at least one `4XX` response.
+  600:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  649:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  693:7  warning  operation-operationId   Operation object should contain `operationId` field.
+  697:9  warning  operation-2xx-response  Operation must have at least one `2XX` response.
+
+openapi.json: validated in 48ms
+
+Woohoo! Your API description is valid. 🎉
+You have 26 warnings.
+
+(código de salida: 0)

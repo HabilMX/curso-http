@@ -1,0 +1,88 @@
+# ejercicio 1
+$ for i in 1 2; do curl -o /dev/null -w 'GET: %{http_code} %header{etag}\n' http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'; done
+GET: 200 "1-1-7552bbf0"
+GET: 200 "1-1-7552bbf0"
+
+$ for i in 1 2; do curl -o /dev/null -w 'PUT con *: %{http_code} %header{etag}\n' -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'If-Match: *' -d '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}'; done
+PUT con *: 200 "1-2-7552bbf0"
+PUT con *: 200 "1-3-7552bbf0"
+
+$ curl http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'
+{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}
+
+$ for i in 1 2; do curl -o /dev/null -w 'PUT /mantenimiento: %{http_code}\n' -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":false}'; done
+PUT /mantenimiento: 204
+PUT /mantenimiento: 204
+
+$ for i in 1 2; do curl -o /dev/null -w 'POST revisión: %{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios/1/revisiones -H 'Authorization: Bearer escritura-a'; done
+POST revisión: 202 /revisiones/1
+POST revisión: 202 /revisiones/2
+
+$ for i in 1 2; do curl -o /dev/null -w 'DELETE: %{http_code}\n' -X DELETE http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'; done
+DELETE: 204
+DELETE: 410
+
+$ for i in 1 2; do curl -o /dev/null -w 'POST con llave: %{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: ejercicio-1' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'; done
+POST con llave: 201 /servicios/7
+POST con llave: 201 /servicios/7
+
+# ejercicio 3 (con ejercicios/ej3/idempotencia.ts)
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: vence-1' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+201 /servicios/7
+
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: vence-1' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+201 /servicios/7
+
+$ sleep 6
+$ curl -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: vence-1' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+{"type":"https://revisor.example/problemas/nombre-repetido","title":"Ya existe un servicio con ese nombre","status":409,"detail":"ya existe un servicio llamado avisos","instance":"/servicios","existente":"/servicios/7"}
+ [409]
+
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: vence-2' -d '{"nombre":"agenda","url":"http://127.0.0.1:18081/codigo/200"}'
+201 /servicios/8
+
+$ curl -o /dev/null -w '%{http_code}\n' -X DELETE http://127.0.0.1:18080/servicios/8 -H 'Authorization: Bearer escritura-a'
+204
+
+$ sleep 6
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: vence-2' -d '{"nombre":"agenda","url":"http://127.0.0.1:18081/codigo/200"}'
+201 /servicios/9
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios
+POST /servicios
+idempotencia: la llave vence-1 ya se atendió; repito su respuesta
+POST /servicios
+POST /servicios
+DELETE /servicios/8
+POST /servicios
+
+# ejercicio 4
+$ for ruta in codigo/504 cortar codigo/500; do curl -o /dev/null -w "%{http_code} %header{location}\n" -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d "{\"nombre\":\"e-${ruta#*/}\",\"url\":\"http://127.0.0.1:18081/$ruta\"}"; done
+201 /servicios/7
+201 /servicios/8
+201 /servicios/9
+
+$ for id in 7 8 9; do curl -o /dev/null -w '%{http_code} ' -X POST http://127.0.0.1:18080/servicios/$id/revisiones -H 'Authorization: Bearer escritura-a'; done; curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/5/revisiones -H 'Authorization: Bearer admin'
+202 202 202 202
+
+$ sleep 8
+$ for i in 1 2 3 4; do curl http://127.0.0.1:18080/revisiones/$i -H 'Authorization: Bearer escritura-a'; done
+{"id":1,"servicio":7,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":504,"ms":1,"detalle":"504"}}
+{"id":2,"servicio":8,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":null,"ms":null,"detalle":"respuesta inválida"}}
+{"id":3,"servicio":9,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":500,"ms":2,"detalle":"500"}}
+{"id":4,"servicio":5,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":null,"ms":null,"detalle":"tiempo agotado"}}
+
+--- terminal del laboratorio:
+laboratorio en http://127.0.0.1:18081/codigo/NNN
+GET /codigo/504
+GET /cortar
+GET /codigo/500
+GET /lento/3000
+GET /cortar
+GET /codigo/504
+GET /codigo/504
+GET /cortar
+GET /lento/3000
+GET /lento/3000

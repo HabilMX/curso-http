@@ -1,0 +1,495 @@
+$ node tabla23.ts
+CÓDIGO  ACCIÓN        REINTENTA  ESPERA  MOTIVO
+200     seguir        no         —       salió bien
+201     seguir        no         —       se creó; la dirección viene en Location
+202     seguir        no         —       se aceptó; el seguimiento viene en Location
+204     seguir        no         —       salió bien y no hay nada que leer
+301     corregir      no         —       la dirección cambió para siempre: actualiza la configuración
+304     seguir        no         —       no cambió: usa la copia que ya tienes
+308     corregir      no         —       la dirección cambió para siempre: actualiza la configuración
+400     corregir      no         —       la petición no se puede leer
+401     reautenticar  no         —       falta una credencial válida
+403     rendirse      no         —       la credencial no tiene permiso: lo resuelve una persona
+404     rendirse      no         —       no existe (o no te lo muestran)
+405     corregir      no         —       ese método no se admite: mira Allow
+409     reconciliar   no         —       choca con el estado actual: relee y decide
+410     rendirse      no         —       se retiró y no va a volver: dalo de baja
+412     reconciliar   no         —       tu etiqueta ya no es la vigente: relee y vuelve a aplicar tu cambio
+415     corregir      no         —       el formato no se admite: mira Accept
+422     corregir      no         —       se entendió, pero los datos no se pueden cumplir
+428     corregir      no         —       falta la condición: manda If-Match
+429     esperar       sí         30 s    demasiadas peticiones: espera lo que diga Retry-After
+500     rendirse      no         —       falla del servidor: repórtala con su instance
+502     esperar       sí         —       falló lo que está detrás: reintenta solo si la operación es idempotente
+503     esperar       sí         120 s   no está disponible: espera lo que diga Retry-After
+504     esperar       sí         —       lo de atrás no respondió a tiempo: reintenta solo si es idempotente
+
+$ node revisar.ts
+SERVICIO     RESPUESTA          ACCIÓN        MOTIVO
+catalogo     200 en 2 ms        seguir        salió bien
+pagos        503 en 1 ms        esperar       no está disponible: espera lo que diga Retry-After
+inventario   200 en 1503 ms     seguir        salió bien
+reportes     tiempo-agotado     esperar       tiempo-agotado
+facturacion  respuesta-invalida esperar       respuesta-invalida
+
+$ node por-type.ts
+409 https://revisor.example/problemas/llave-en-curso
+  solo con el código: reconciliar (choca con el estado actual: relee y decide)
+  con el type:        esperar (la petición original sigue en curso: espera y repite con la misma llave)
+409 https://revisor.example/problemas/nombre-repetido
+  solo con el código: reconciliar (choca con el estado actual: relee y decide)
+  con el type:        reconciliar (ya existe: mira el miembro existente antes de crear otro)
+
+$ node revisar.ts inventada
+la API respondió 401 (https://revisor.example/problemas/credencial-invalida): reautenticar, falta una credencial válida
+
+$ curl -sS -o /dev/null -w '%{http_code}\n' -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":true}'
+204
+
+$ node revisar.ts
+la API respondió 503 (https://revisor.example/problemas/en-mantenimiento): esperar, el revisor está en mantenimiento: espera lo que diga Retry-After
+  pide esperar 120 s, más que el tope de 5 s: lo intento más tarde
+
+$ curl -sS -o /dev/null -w '%{http_code}\n' -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":false}'
+204
+
+$ ETAG=$(curl -sS -o /dev/null -w '%header{etag}' http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer lectura-a'); echo "ETAG=$ETAG"
+ETAG="1-1-a9baef47"
+
+$ curl -sS -i http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer lectura-a' -H "If-None-Match: W/$ETAG"
+HTTP/1.1 304 Not Modified
+ETag: "1-1-a9baef47"
+Date: Wed, 21 Oct 2026 22:09:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+$ curl -sS -i http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer lectura-a' -H "If-None-Match: \"9-9\", $ETAG"
+HTTP/1.1 304 Not Modified
+ETag: "1-1-a9baef47"
+Date: Wed, 21 Oct 2026 22:09:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+$ curl -sS -i http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer lectura-a' -H 'If-None-Match: *'
+HTTP/1.1 304 Not Modified
+ETag: "1-1-a9baef47"
+Date: Wed, 21 Oct 2026 22:09:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+$ curl -sS -i http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer lectura-a' -H 'If-None-Match: "9-9", W/"8-8"'
+HTTP/1.1 200 OK
+ETag: "1-1-a9baef47"
+Content-Type: application/json
+Content-Length: 88
+Date: Wed, 21 Oct 2026 22:09:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+
+$ curl -sS -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H "If-Match: W/$ETAG" -d '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}'
+HTTP/1.1 412 Precondition Failed
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 263
+Date: Wed, 21 Oct 2026 22:09:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/etiqueta-vencida","title":"Tu etiqueta ya no es la vigente","status":412,"detail":"If-Match se compara en fuerte: una etiqueta débil (W/) no sirve para cambiar; manda la ETag tal como llegó","instance":"/servicios/1"}
+
+$ curl -sS -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H "If-Match: \"9-9\", $ETAG" -d '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}'
+HTTP/1.1 200 OK
+ETag: "1-2-a9baef47"
+Content-Type: application/json
+Content-Length: 88
+Date: Wed, 21 Oct 2026 22:09:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}
+
+$ curl -sS -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'If-Match: *' -d '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}'
+HTTP/1.1 200 OK
+ETag: "1-3-a9baef47"
+Content-Type: application/json
+Content-Length: 88
+Date: Wed, 21 Oct 2026 22:09:21 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}
+
+$ ETAG=$(curl -sS -o /dev/null -w '%header{etag}' http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'); echo "ETAG=$ETAG"
+ETAG="1-3-a9baef47"
+
+$ ( sleep 1; printf '%s' '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1000}' ) | curl -sS -w 'lenta: %{http_code}\n' -X PUT -T - http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H "If-Match: $ETAG" & LENTA=$!; sleep 0.3; curl -sS -o /dev/null -w 'rápida: %{http_code}\n' -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H "If-Match: $ETAG" -d '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":3000}'; wait $LENTA
+rápida: 200
+{"type":"https://revisor.example/problemas/etiqueta-vencida","title":"Tu etiqueta ya no es la vigente","status":412,"detail":"el servicio cambió mientras se atendía tu petición; vuelve a leerlo antes de cambiarlo","instance":"/servicios/1"}
+lenta: 412
+
+$ curl -sS http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'
+{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":3000}
+
+$ curl -sS -o /dev/null -w 'text/plain con etiqueta vieja: %{http_code}\n' -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: text/plain' -H 'If-Match: "1-0-0"' -d 'catalogo'
+text/plain con etiqueta vieja: 415
+
+$ curl -sS -o /dev/null -w 'text/plain sin If-Match: %{http_code}\n' -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: text/plain' -d 'catalogo'
+text/plain sin If-Match: 415
+
+$ ID=$(curl -sS -o /dev/null -w '%header{location}' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"efimero","url":"http://127.0.0.1:18081/codigo/200"}'); ETAG=$(curl -sS -o /dev/null -w '%header{etag}' http://127.0.0.1:18080$ID -H 'Authorization: Bearer escritura-a'); echo "ID=$ID ETAG=$ETAG"
+ID=/servicios/8 ETAG="8-1-a9baef47"
+
+$ ( sleep 1; printf '%s' '{"nombre":"efimero","url":"http://127.0.0.1:18081/codigo/200"}' ) | curl -sS -w ' <- PUT lento: %{http_code}\n' -X PUT -T - http://127.0.0.1:18080$ID -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H "If-Match: $ETAG" & LENTO=$!; sleep 0.3; curl -sS -o /dev/null -w 'DELETE en el hueco: %{http_code}\n' -X DELETE http://127.0.0.1:18080$ID -H 'Authorization: Bearer escritura-a'; wait $LENTO
+DELETE en el hueco: 204
+{"type":"https://revisor.example/problemas/servicio-retirado","title":"El servicio se retiró","status":410,"detail":"el servicio 8 se retiró y no va a volver","instance":"/servicios/8"}
+ <- PUT lento: 410
+
+$ curl -sS -i http://127.0.0.1:18080/servicios -H 'Authorization: bearer lectura-a'
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 540
+Date: Wed, 21 Oct 2026 22:09:24 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicios":[{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":3000},{"id":2,"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/503","limite_ms":2000},{"id":4,"nombre":"inventario","url":"http://127.0.0.1:18081/lento/1500","limite_ms":2000},{"id":5,"nombre":"reportes","url":"http://127.0.0.1:18081/lento/3000","limite_ms":1000},{"id":6,"nombre":"facturacion","url":"http://127.0.0.1:18081/basura","limite_ms":2000},{"id":7,"nombre":"correo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}]}
+
+$ curl -sS -i http://127.0.0.1:18080/servicios -H 'Authorization: Basic bGVjdHVyYS1hOg=='
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer realm="revisor"
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 185
+Date: Wed, 21 Oct 2026 22:09:24 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/credencial-invalida","title":"Falta una credencial válida","status":401,"detail":"solo se admite el esquema Bearer","instance":"/servicios"}
+
+$ curl -sS -i -X constructor http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 400 Bad Request
+Connection: close
+
+
+$ head -c 20000 /dev/zero | tr '\0' 'a' | curl -sS -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' --data-binary @-
+HTTP/1.1 413 Content Too Large
+Connection: close
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 129
+Date: Wed, 21 Oct 2026 23:42:15 GMT
+
+{"type":"about:blank","title":"Content Too Large","status":413,"detail":"el cuerpo pasa de 16384 bytes","instance":"/servicios"}
+
+$ head -c 20000 /dev/zero | tr '\0' 'a' | curl -sS -o /dev/null -w 'por partes: %{http_code}\n' -X POST -T - http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json'
+por partes: 413
+
+$ head -c 16384 /dev/zero | tr '\0' 'a' | curl -sS -o /dev/null -w 'en el tope: %{http_code}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' --data-binary @-
+en el tope: 400
+
+$ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer lectura-a'
+200
+
+$ curl -sS -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d 'null'
+HTTP/1.1 400 Bad Request
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 177
+Date: Wed, 21 Oct 2026 22:09:24 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/cuerpo-ilegible","title":"El cuerpo no se puede leer","status":400,"detail":"el cuerpo no es un objeto JSON","instance":"/servicios"}
+
+$ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer lectura-a'
+200
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-1","url":"http://100.100.100.200/latest/meta-data/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: 100.100.100.200:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-2","url":"http://[64:ff9b::a9fe:a9fe]/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: [64:ff9b::a9fe:a9fe]:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-3","url":"http://224.0.0.1/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: 224.0.0.1:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-4","url":"http://[ff02::1]/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: [ff02::1]:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-5","url":"http://[2002:a9fe:a9fe::]/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: [2002:a9fe:a9fe::]:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-6","url":"http://[::7f00:1]/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: [::7f00:1]:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-7","url":"http://[64:ff9b:1::a9fe:a9fe]/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: [64:ff9b:1::a9fe:a9fe]:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-8","url":"http://240.0.0.1/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: 240.0.0.1:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-9","url":"http://198.18.0.1/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: 198.18.0.1:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-10","url":"http://192.0.2.1/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: 192.0.2.1:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-11","url":"http://[2001:db8::1]/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: [2001:db8::1]:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ curl -sS -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"rango-12","url":"http://[2001:0:4136:e378:8000:63bf:3fff:fdd2]/"}'
+{"type":"https://revisor.example/problemas/destino-prohibido","title":"El revisor no se conecta a ese destino","status":422,"detail":"destino prohibido: [2001:0:4136:e378:8000:63bf:3fff:fdd2]:80: dirección privada o reservada","instance":"/servicios"}
+ [422]
+
+$ for i in 1 2 3 4; do curl -sS -o /dev/null -w '%{http_code} %header{retry-after}\n' http://127.0.0.1:18080/servicios/1/salud -H 'Authorization: Bearer lectura-a'; done
+200 
+200 
+200 
+429 60
+
+$ for i in 1 2 3 4 5 6; do curl -sS -o /dev/null -w '%{http_code} ' -X POST http://127.0.0.1:18080/servicios/$i/revisiones -H 'Authorization: Bearer escritura-b'; done; echo
+404 404 202 429 429 429 
+
+$ ID=$(curl -sS -o /dev/null -w '%header{location}' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"cortado","url":"http://127.0.0.1:18081/cortar"}'); echo "ID=$ID"
+ID=/servicios/9
+
+$ curl -sS -i http://127.0.0.1:18080$ID/salud -H 'Authorization: Bearer admin'
+HTTP/1.1 502 Bad Gateway
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 278
+Date: Wed, 21 Oct 2026 22:09:25 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/respuesta-invalida","title":"El servicio no dio una respuesta HTTP válida","status":502,"detail":"el servicio 9 no dio una respuesta HTTP válida: cortó la conexión o respondió algo que no es HTTP","instance":"/servicios/9/salud"}
+
+$ TZ=America/Mexico_City node --input-type=module -e 'import { segundosDeEspera } from "./cliente.ts"; for (const v of ["120", "1.5", "-1", "12 30"]) console.log(JSON.stringify(v), "->", segundosDeEspera(v)); const imf = segundosDeEspera("Fri, 01 Jan 2100 00:00:00 GMT"), asc = segundosDeEspera("Fri Jan  1 00:00:00 2100"); console.log("asctime menos IMF-fixdate (misma fecha):", asc - imf, "s")'
+"120" -> 120
+"1.5" -> null
+"-1" -> null
+"12 30" -> null
+asctime menos IMF-fixdate (misma fecha): 0 s
+
+$ kill $REV; wait $REV 2>/dev/null
+
+$ curl -sS -i -X POST http://127.0.0.1:18082/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"sin-revisor","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 502 Bad Gateway
+Content-Type: application/problem+json
+Content-Length: 115
+Date: Wed, 21 Oct 2026 22:09:25 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió respuesta del revisor"}
+
+$ node alta-segura.ts sin-revisor http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió respuesta del revisor"}
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió respuesta del revisor"}
+  espero entre 0 y 1000 ms y reintento con la misma llave
+intento 3: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió respuesta del revisor"}
+  espero entre 0 y 2000 ms y reintento con la misma llave
+intento 4: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió respuesta del revisor"}
+se agotaron los 4 intentos sin una respuesta definitiva; repetir más tarde con la llave 7d2ce9fe-098f-44b3-8c6f-63196cf967f4 es seguro
+(código de salida: 1)
+
+$ kill $PAS; wait $PAS 2>/dev/null
+
+$ node alta-segura.ts sin-pasarela http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: sin respuesta (ECONNREFUSED)
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: sin respuesta (ECONNREFUSED)
+  espero entre 0 y 1000 ms y reintento con la misma llave
+intento 3: sin respuesta (ECONNREFUSED)
+  espero entre 0 y 2000 ms y reintento con la misma llave
+intento 4: sin respuesta (ECONNREFUSED)
+se agotaron los 4 intentos sin una respuesta definitiva; repetir más tarde con la llave c137e4eb-b371-4b8c-866e-c0e9ba707f54 es seguro
+(código de salida: 1)
+
+$ node -e 'require("node:net").createServer(() => {}).listen(18082, "127.0.0.1")' & MUDO=$!; sleep 0.5
+
+$ ALTA_LIMITE_MS=300 node alta-segura.ts mudo http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: sin respuesta (tiempo agotado: 300 ms)
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: sin respuesta (tiempo agotado: 300 ms)
+  espero entre 0 y 1000 ms y reintento con la misma llave
+intento 3: sin respuesta (tiempo agotado: 300 ms)
+  espero entre 0 y 2000 ms y reintento con la misma llave
+intento 4: sin respuesta (tiempo agotado: 300 ms)
+se agotaron los 4 intentos sin una respuesta definitiva; repetir más tarde con la llave 97d896e6-d8f6-4d04-86b2-54bff7b008e7 es seguro
+(código de salida: 1)
+
+$ kill $MUDO; wait $MUDO 2>/dev/null
+
+$ node --input-type=module -e 'import { createServer } from "node:http"; let n = 0; createServer((q, r) => { q.resume(); if (++n === 1) { r.writeHead(503, { "Retry-After": "2", "Content-Type": "application/problem+json" }); r.end("{\"type\":\"about:blank\",\"title\":\"Service Unavailable\",\"status\":503}\n"); } else { r.writeHead(201, { "Content-Type": "application/json" }); r.end("{\"id\":99}\n"); } }).listen(18082, "127.0.0.1")' & PIDE=$!; sleep 0.5
+
+$ node alta-segura.ts paciente http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: 503 {"type":"about:blank","title":"Service Unavailable","status":503}
+  el servidor pide esperar 2 s (Retry-After); espero 2 s y reintento con la misma llave
+intento 2: 201 {"id":99}
+(código de salida: 0)
+
+$ kill $PIDE; wait $PIDE 2>/dev/null
+
+$ node --input-type=module -e 'import { createServer } from "node:http"; let n = 0; createServer((q, r) => { q.resume(); if (++n === 1) { r.writeHead(409, { "Content-Type": "application/problem+json" }); r.end("{\"type\":\"https://revisor.example/problemas/llave-en-curso\",\"title\":\"Esa Idempotency-Key sigue en curso\",\"status\":409}\n"); } else { r.writeHead(201, { "Content-Type": "application/json" }); r.end("{\"id\":99}\n"); } }).listen(18082, "127.0.0.1")' & CURSO=$!; sleep 0.5
+
+$ node alta-segura.ts en-curso http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: 409 {"type":"https://revisor.example/problemas/llave-en-curso","title":"Esa Idempotency-Key sigue en curso","status":409}
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: 201 {"id":99}
+(código de salida: 0)
+
+$ kill $CURSO; wait $CURSO 2>/dev/null
+
+$ node pasarela.ts >> pasarela.log 2>&1 & PAS=$!; node servidor.ts >> servidor.log 2>&1 & REV=$!; sleep 1
+
+$ curl -sS -i -X POST http://127.0.0.1:18082/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"por-pasarela","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 201 Created
+content-type: application/json
+content-length: 92
+location: /servicios/7
+etag: "7-1-7a0fbfed"
+Date: Wed, 21 Oct 2026 22:09:39 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":7,"nombre":"por-pasarela","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+
+$ node alta-segura.ts invalida ftp://archivos; echo "(código de salida: $?)"
+intento 1: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió una respuesta completa del revisor"}
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: 422 {"type":"https://revisor.example/problemas/datos-invalidos","title":"Los datos no se pueden cumplir","status":422,"detail":"1 dato(s) no se pueden cumplir","instance":"/servicios","errors":[{"detail":"debe ser una dirección http o https","pointer":"#/url"}]}
+el servidor respondió 422: repetir lo mismo no lo arregla
+(código de salida: 1)
+
+$ curl -sS -o /dev/null -w '%{http_code}\n' -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":true}'
+204
+
+$ node alta-segura.ts enmantenimiento http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió una respuesta completa del revisor"}
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: 503 {"type":"https://revisor.example/problemas/en-mantenimiento","title":"El revisor está en mantenimiento","status":503,"detail":"el revisor está en mantenimiento","instance":"/servicios"}
+el servidor pidió esperar 120 s (Retry-After), más de los 5 s que este programa espera; no se reintenta; repetir más tarde con la llave d7375073-7514-4c44-bf14-59b2ea6220c9 es seguro
+(código de salida: 1)
+
+$ curl -sS -o /dev/null -w '%{http_code}\n' -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":false}'
+204
+
+$ ANTES=$(curl -sS -o /dev/null -w '%header{etag}' http://127.0.0.1:18080/servicios/3 -H 'Authorization: Bearer escritura-b'); echo "ANTES=$ANTES"
+ANTES="3-1-7a0fbfed"
+
+$ kill $REV; wait $REV 2>/dev/null; node servidor.ts >> servidor.log 2>&1 & REV=$!; sleep 1
+
+$ curl -sS -i http://127.0.0.1:18080/servicios/3 -H 'Authorization: Bearer escritura-b' -H "If-None-Match: $ANTES"
+HTTP/1.1 200 OK
+ETag: "3-1-68f64c0b"
+Content-Type: application/json
+Content-Length: 86
+Date: Wed, 21 Oct 2026 22:09:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":3,"nombre":"nomina","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+
+--- terminal del revisor (la carpeta de la máquina se escribe <carpeta>):
+revisor en http://127.0.0.1:18080
+GET /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+GET /servicios
+PUT /mantenimiento
+operación: mantenimiento encendido
+GET /servicios
+PUT /mantenimiento
+operación: mantenimiento apagado
+GET /servicios/1
+GET /servicios/1
+GET /servicios/1
+GET /servicios/1
+GET /servicios/1
+PUT /servicios/1
+PUT /servicios/1
+PUT /servicios/1
+GET /servicios/1
+PUT /servicios/1
+PUT /servicios/1
+GET /servicios/1
+PUT /servicios/1
+PUT /servicios/1
+POST /servicios
+GET /servicios/8
+PUT /servicios/8
+DELETE /servicios/8
+GET /servicios
+GET /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+GET /servicios/1
+POST /servicios
+GET /servicios/1
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+GET /servicios/1/salud
+GET /servicios/1/salud
+GET /servicios/1/salud
+GET /servicios/1/salud
+POST /servicios/1/revisiones
+POST /servicios/2/revisiones
+POST /servicios/3/revisiones
+POST /servicios/4/revisiones
+POST /servicios/5/revisiones
+POST /servicios/6/revisiones
+POST /servicios
+GET /servicios/9/salud
+revisor en http://127.0.0.1:18080
+POST /servicios
+POST /servicios
+POST /servicios
+PUT /mantenimiento
+operación: mantenimiento encendido
+POST /servicios
+POST /servicios
+PUT /mantenimiento
+operación: mantenimiento apagado
+GET /servicios/3
+revisor en http://127.0.0.1:18080
+GET /servicios/3
+--- terminal de la pasarela:
+pasarela en http://127.0.0.1:18082 → http://127.0.0.1:18080
+pasarela: el revisor no respondió
+pasarela: el revisor no respondió
+pasarela: el revisor no respondió
+pasarela: el revisor no respondió
+pasarela: el revisor no respondió
+pasarela en http://127.0.0.1:18082 → http://127.0.0.1:18080
+pasarela: el revisor respondió 422, pero la respuesta se pierde
+pasarela: el revisor respondió 503, pero la respuesta se pierde

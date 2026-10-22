@@ -1,0 +1,5 @@
+$ node matriz23.ts   # la matriz «arreglada», contra el servidor con el defecto
+ok    ETag tras reiniciar el revisor: la vieja no coincide (200, no un 304 falso)
+
+41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+(código de salida: 0)

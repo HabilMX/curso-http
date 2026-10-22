@@ -1,0 +1,36 @@
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"puerta","url":"http://127.0.0.1:18081/codigo/502"}'
+201 /servicios/7
+
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"cupo","url":"http://127.0.0.1:18081/codigo/429"}'
+201 /servicios/8
+
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"ausente","url":"http://127.0.0.1:18081/codigo/404"}'
+201 /servicios/9
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/2/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/7/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/8/revisiones -H 'Authorization: Bearer escritura-a'
+202
+
+$ curl -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:18080/servicios/9/revisiones -H 'Authorization: Bearer admin'
+202
+
+$ sleep 4
+$ for i in 1 2 3 4; do curl http://127.0.0.1:18080/revisiones/$i -H 'Authorization: Bearer escritura-a'; done
+{"id":1,"servicio":2,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":503,"ms":12,"detalle":"503 (reintentar en 120 s)"}}
+{"id":2,"servicio":7,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":502,"ms":1,"detalle":"502"}}
+{"id":3,"servicio":8,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":429,"ms":1,"detalle":"429 (reintentar en 30 s)"}}
+{"id":4,"servicio":9,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":404,"ms":2,"detalle":"404"}}
+
+--- terminal del laboratorio:
+laboratorio en http://127.0.0.1:18081/codigo/NNN
+GET /codigo/503
+GET /codigo/502
+GET /codigo/429
+GET /codigo/404
+GET /codigo/502
+GET /codigo/502

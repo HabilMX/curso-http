@@ -1,0 +1,65 @@
+$ node fig07_05.ts
+código  sin tabla  con tabla
+400             3          1
+401             3          1
+403             3          1
+404             3          1
+409             3          1
+410             3          1
+422             3          1
+429             3          1
+500             3          1
+502             3          3
+503             3          1
+total          33         13
+
+--- terminal del laboratorio:
+laboratorio en http://127.0.0.1:18081/codigo/NNN
+GET /codigo/400
+GET /codigo/400
+GET /codigo/400
+GET /codigo/400
+GET /codigo/401
+GET /codigo/401
+GET /codigo/401
+GET /codigo/401
+GET /codigo/403
+GET /codigo/403
+GET /codigo/403
+GET /codigo/403
+GET /codigo/404
+GET /codigo/404
+GET /codigo/404
+GET /codigo/404
+GET /codigo/409
+GET /codigo/409
+GET /codigo/409
+GET /codigo/409
+GET /codigo/410
+GET /codigo/410
+GET /codigo/410
+GET /codigo/410
+GET /codigo/422
+GET /codigo/422
+GET /codigo/422
+GET /codigo/422
+GET /codigo/429
+GET /codigo/429
+GET /codigo/429
+GET /codigo/429
+GET /codigo/500
+GET /codigo/500
+GET /codigo/500
+GET /codigo/500
+GET /codigo/502
+GET /codigo/502
+GET /codigo/502
+GET /codigo/502
+GET /codigo/502
+GET /codigo/502
+GET /codigo/503
+GET /codigo/503
+GET /codigo/503
+GET /codigo/503
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080

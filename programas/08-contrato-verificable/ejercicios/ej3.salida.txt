@@ -1,0 +1,9 @@
+$ node matriz23.ts   # sin el 405 de GET /servicios/{id} en el documento
+FALLA 405 método no admitido: openapi.json no documenta 405 en GET /servicios/{id}
+
+40 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+
+$ npx redocly lint openapi.json --format=stylish   # el mismo documento
+Woohoo! Your API description is valid. 🎉
+You have 26 warnings.
+

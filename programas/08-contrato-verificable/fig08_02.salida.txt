@@ -1,0 +1,29 @@
+$ node fig08_02.ts
+clave                     código  type                  ¿código en el documento?  ¿type en el documento?
+ruta-inexistente          404     about:blank           sí                        (no aplica)
+metodo-no-admitido        405     about:blank           sí                        (no aplica)
+tipo-no-admitido          415     about:blank           sí                        (no aplica)
+cuerpo-demasiado-grande   413     about:blank           sí                        (no aplica)
+cuerpo-ilegible           400     cuerpo-ilegible       sí                        sí
+credencial-invalida       401     credencial-invalida   sí                        sí
+permiso-insuficiente      403     permiso-insuficiente  sí                        sí
+servicio-inexistente      404     servicio-inexistente  sí                        sí
+revision-inexistente      404     revision-inexistente  sí                        NO
+nombre-repetido           409     nombre-repetido       sí                        sí
+servicio-retirado         410     servicio-retirado     sí                        sí
+version-retirada          410     version-retirada      sí                        sí
+etiqueta-vencida          412     etiqueta-vencida      sí                        sí
+destino-prohibido         422     destino-prohibido     sí                        sí
+datos-invalidos           422     datos-invalidos       sí                        sí
+llave-en-curso            409     llave-en-curso        sí                        sí
+llave-reutilizada         422     llave-reutilizada     sí                        sí
+falta-condicion           428     falta-condicion       sí                        sí
+demasiadas-revisiones     429     demasiadas-revisiones sí                        sí
+demasiadas-consultas      429     demasiadas-consultas  sí                        sí
+error-interno             500     error-interno         sí                        sí
+respuesta-invalida        502     respuesta-invalida    sí                        sí
+en-mantenimiento          503     en-mantenimiento      sí                        sí
+servicio-lento            504     servicio-lento        sí                        sí
+
+24 tipos en el catálogo; 1 con un hueco en el documento
+(código de salida: 1)

@@ -1,0 +1,38 @@
+$ node fig07_02.ts
+agenda
+  respondió 201 (sin Problem Details)
+  acción: seguir — listo, sigue con el siguiente
+agenda
+  respondió 409 https://revisor.example/problemas/nombre-repetido
+  acción: reconciliar — relee el servicio que ya existe y compara con el que quería crear
+nomina2 (no existe aún)
+  respondió 201 (sin Problem Details)
+  acción: seguir — listo, sigue con el siguiente
+nomina2 (no existe aún)
+  respondió 409 https://revisor.example/problemas/nombre-repetido
+  acción: reconciliar — relee el servicio que ya existe y compara con el que quería crear
+cuenta
+  respondió 422 https://revisor.example/problemas/datos-invalidos
+  acción: corregir — no repite: corrige la petición
+metadatos
+  respondió 422 https://revisor.example/problemas/destino-prohibido
+  acción: corregir — no repite: corrige la petición
+sin-permiso
+  respondió 403 https://revisor.example/problemas/permiso-insuficiente
+  acción: rendirse — se detiene y avisa a una persona; no vuelve a intentarlo
+sin-credencial
+  respondió 401 https://revisor.example/problemas/credencial-invalida
+  acción: reautenticar — no repite: pide una credencial válida
+
+--- terminal del laboratorio:
+laboratorio en http://127.0.0.1:18081/codigo/NNN
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios

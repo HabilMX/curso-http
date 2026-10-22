@@ -1,0 +1,223 @@
+### Ejercicios 1 a 3 (revisor recién arrancado)
+
+$ curl -i http://127.0.0.1:18080/revisiones/99 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 177
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/revision-inexistente","title":"La revisión no existe","status":404,"detail":"no existe la revisión 99","instance":"/revisiones/99"}
+
+$ curl -i -X DELETE http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 403 Forbidden
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 231
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/permiso-insuficiente","title":"La credencial no tiene permiso","status":403,"detail":"tu credencial solo puede leer; para escribir pide una con rol de escritor","instance":"/servicios/1"}
+
+$ curl -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 428 Precondition Required
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 202
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/falta-condicion","title":"Falta la condición If-Match","status":428,"detail":"para cambiar un servicio manda If-Match con su ETag","instance":"/servicios/1"}
+
+$ curl -i http://127.0.0.1:18080/v0/servicios
+HTTP/1.1 410 Gone
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 231
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/version-retirada","title":"Esa versión de la API se retiró","status":410,"detail":"la versión 0 de la API se retiró el 31 de enero de 2026; usa /servicios","instance":"/v0/servicios"}
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{}'
+HTTP/1.1 422 Unprocessable Content
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 333
+Date: Wed, 21 Oct 2026 13:18:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/datos-invalidos","title":"Los datos no se pueden cumplir","status":422,"detail":"2 dato(s) no se pueden cumplir","instance":"/servicios","errors":[{"detail":"debe ser un texto de 1 a 40 caracteres","pointer":"#/nombre"},{"detail":"debe ser una dirección http o https","pointer":"#/url"}]}
+
+$ curl -i http://127.0.0.1:18080/servicios/5/salud -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 504 Gateway Timeout
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 200
+Date: Wed, 21 Oct 2026 13:18:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/servicio-lento","title":"El servicio no respondió a tiempo","status":504,"detail":"el servicio 5 no respondió en 1000 ms","instance":"/servicios/5/salud"}
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"pagos","url":"ftp://pagos"}'
+HTTP/1.1 422 Unprocessable Content
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 260
+Date: Wed, 21 Oct 2026 13:18:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/datos-invalidos","title":"Los datos no se pueden cumplir","status":422,"detail":"1 dato(s) no se pueden cumplir","instance":"/servicios","errors":[{"detail":"debe ser una dirección http o https","pointer":"#/url"}]}
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"","url":"http://169.254.169.254/"}'
+HTTP/1.1 422 Unprocessable Content
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 265
+Date: Wed, 21 Oct 2026 13:18:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/datos-invalidos","title":"Los datos no se pueden cumplir","status":422,"detail":"1 dato(s) no se pueden cumplir","instance":"/servicios","errors":[{"detail":"debe ser un texto de 1 a 40 caracteres","pointer":"#/nombre"}]}
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer lectura-a' -H 'Content-Type: text/plain' -d 'pagos'
+HTTP/1.1 403 Forbidden
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 229
+Date: Wed, 21 Oct 2026 13:18:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/permiso-insuficiente","title":"La credencial no tiene permiso","status":403,"detail":"tu credencial solo puede leer; para escribir pide una con rol de escritor","instance":"/servicios"}
+
+$ curl -i http://127.0.0.1:18080/servicios/99 -H 'Authorization: Bearer escritura-a' -H 'Accept: text/html' -H 'Accept-Language: en'
+HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 174
+Date: Wed, 21 Oct 2026 13:18:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/servicio-inexistente","title":"El servicio no existe","status":404,"detail":"no existe el servicio 99","instance":"/servicios/99"}
+
+$ curl -i http://127.0.0.1:18080/servicioss -H 'Authorization: Bearer escritura-a' -H 'Accept-Language: en'
+HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 111
+Date: Wed, 21 Oct 2026 13:18:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"about:blank","title":"Not Found","status":404,"detail":"no existe esa ruta","instance":"/servicioss"}
+
+$ curl -I http://127.0.0.1:18080/servicios/99 -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 404 Not Found
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 174
+Date: Wed, 21 Oct 2026 13:18:35 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /revisiones/99
+DELETE /servicios/1
+PUT /servicios/1
+GET /v0/servicios
+POST /servicios
+GET /servicios/5/salud
+POST /servicios
+POST /servicios
+POST /servicios
+GET /servicios/99
+GET /servicioss
+HEAD /servicios/99
+
+### Ejercicio 4 (problemas.ts de ejercicio4/; después, existente cambiado a ex en servicios.ts y el revisor reiniciado; por último, ex cambiado a status y el revisor reiniciado)
+
+$ node fig05_02.ts
+ok    GET /servicios/99 (servicio que no existe)
+ok    GET /servicios/3 (servicio de otro equipo)
+ok    GET /revisiones/99 (revisión que no existe)
+ok    GET /servicioss (ruta que no existe)
+ok    PATCH /servicios/1 (método que la ruta no admite)
+ok    GET /servicios (sin credencial)
+ok    POST /servicios (cuerpo en texto)
+ok    POST /servicios (cuerpo de más de 16 KiB)
+ok    POST /servicios (datos imposibles)
+ok    POST /servicios (nombre repetido)
+ok    PUT /servicios/1 (cambio sin If-Match)
+ok    GET /v0/servicios (versión retirada)
+ok    GET /servicios/1/informe (error interno)
+
+13 de 13 respuestas son Problem Details bien formados
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 244
+Date: Wed, 21 Oct 2026 13:18:37 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/error-interno","title":"Error interno del revisor","status":500,"detail":"ocurrió un error inesperado; si se repite, reporta la referencia","instance":"urn:uuid:c0160764-27de-42f7-866a-28ea3f622e08"}
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/problem+json
+Content-Language: es
+Content-Length: 244
+Date: Wed, 21 Oct 2026 13:18:38 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"type":"https://revisor.example/problemas/error-interno","title":"Error interno del revisor","status":500,"detail":"ocurrió un error inesperado; si se repite, reporta la referencia","instance":"urn:uuid:6e53e149-c257-402b-8ea7-2e74df849fb6"}
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios/99
+GET /servicios/3
+GET /revisiones/99
+GET /servicioss
+PATCH /servicios/1
+GET /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+PUT /servicios/1
+GET /v0/servicios
+GET /servicios/1/informe
+error d851b0ec-23bb-4146-a880-92548a203b41 en GET /servicios/1/informe: TypeError: Cannot read properties of undefined (reading 'resultado')
+    at Object.informe [as manejador] (file://<carpeta>/servicios.ts:314:28)
+    at atender (file://<carpeta>/rutas.ts:107:16)
+    at atenderSinFiltrar (file://<carpeta>/servidor.ts:23:11)
+    at Server.<anonymous> (file://<carpeta>/servidor.ts:38:44)
+revisor en http://127.0.0.1:18080
+POST /servicios
+error c0160764-27de-42f7-866a-28ea3f622e08 en POST /servicios: Error: la extensión ex no cumple la forma del RFC 9457
+    at fallar (file://<carpeta>/problemas.ts:54:59)
+    at Object.darDeAlta [as manejador] (file://<carpeta>/servicios.ts:150:5)
+    at async atender (file://<carpeta>/rutas.ts:107:3)
+    at async atenderSinFiltrar (file://<carpeta>/servidor.ts:23:5)
+revisor en http://127.0.0.1:18080
+POST /servicios
+error 6e53e149-c257-402b-8ea7-2e74df849fb6 en POST /servicios: Error: la extensión status usa un nombre reservado
+    at fallar (file://<carpeta>/problemas.ts:52:39)
+    at Object.darDeAlta [as manejador] (file://<carpeta>/servicios.ts:150:5)
+    at async atender (file://<carpeta>/rutas.ts:107:3)
+    at async atenderSinFiltrar (file://<carpeta>/servidor.ts:23:5)

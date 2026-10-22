@@ -1,0 +1,36 @@
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-avisos-1' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 201 Created
+Location: /servicios/7
+ETag: "7-1-9d9d764a"
+Content-Type: application/json
+Content-Length: 86
+Date: Wed, 21 Oct 2026 22:26:02 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":7,"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-avisos-1' -d '{"nombre":"correo","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 201 Created
+Location: /servicios/7
+ETag: "7-1-9d9d764a"
+Content-Type: application/json
+Content-Length: 86
+Date: Wed, 21 Oct 2026 22:26:02 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":7,"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+
+$ curl http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a'
+{"servicios":[{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000},{"id":2,"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/503","limite_ms":2000},{"id":4,"nombre":"inventario","url":"http://127.0.0.1:18081/lento/1500","limite_ms":2000},{"id":5,"nombre":"reportes","url":"http://127.0.0.1:18081/lento/3000","limite_ms":1000},{"id":6,"nombre":"facturacion","url":"http://127.0.0.1:18081/basura","limite_ms":2000},{"id":7,"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}]}
+
+$ node fig06_03.ts
+ok    misma llave y mismo cuerpo: la misma respuesta, un solo servicio
+FALLA misma llave con otro cuerpo: 422 llave-reutilizada, y no crea nada
+      dio 201 , se esperaba 422 llave-reutilizada
+ok    misma llave mientras la original sigue en curso: 409 llave-en-curso
+ok    un alta que falla libera la llave: corregida, con la misma llave, 201
+ok    dos llaves distintas con el mismo cuerpo: la segunda choca con el nombre (409 nombre-repetido)
+
+4 de 5 comprobaciones de idempotencia pasaron

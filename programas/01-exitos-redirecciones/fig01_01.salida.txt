@@ -1,0 +1,353 @@
+# Recorrido de la lección 1 en su orden, con los reinicios donde la lección los pide.
+# Las ETag llevan un identificador que cambia en cada arranque del revisor.
+# --- arrancar
+$ curl -i http://127.0.0.1:18080/servicios
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 275
+Date: Wed, 21 Oct 2026 13:17:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicios":[{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000},{"id":2,"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/503","limite_ms":2000},{"id":3,"nombre":"nomina","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}]}
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"inventario","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 201 Created
+Location: /servicios/4
+ETag: "4-1-7b2497d9"
+Content-Type: application/json
+Content-Length: 90
+Date: Wed, 21 Oct 2026 13:17:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":4,"nombre":"inventario","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+$ curl -i http://127.0.0.1:18080/servicios/4
+HTTP/1.1 200 OK
+ETag: "4-1-7b2497d9"
+Content-Type: application/json
+Content-Length: 90
+Date: Wed, 21 Oct 2026 13:17:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":4,"nombre":"inventario","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"eterno","url":"http://127.0.0.1:18081/codigo/200","limite_ms":3600000}'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 47
+Date: Wed, 21 Oct 2026 13:17:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+limite_ms debe ser un entero entre 100 y 10000
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d 'null'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 31
+Date: Wed, 21 Oct 2026 13:17:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el cuerpo no es un objeto JSON
+$ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios
+200
+$ head -c 20000 /dev/zero | curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' --data-binary @-
+HTTP/1.1 413 Content Too Large
+Connection: close
+Content-Type: text/plain; charset=utf-8
+Content-Length: 30
+Date: Wed, 21 Oct 2026 23:42:10 GMT
+
+el cuerpo pasa de 16384 bytes
+$ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios
+200
+# --- terminal del revisor (arranque 1):
+revisor en http://127.0.0.1:18080
+GET /servicios
+POST /servicios
+GET /servicios/4
+POST /servicios
+POST /servicios
+GET /servicios
+POST /servicios
+GET /servicios
+# --- detener
+# --- arrancar
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"inventario","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 201 Created
+Location: /servicios/4
+ETag: "4-1-b27b3d9a"
+Content-Type: application/json
+Content-Length: 90
+Date: Wed, 21 Oct 2026 13:17:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":4,"nombre":"inventario","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+$ curl -i -X POST http://127.0.0.1:18080/servicios/2/revisiones
+HTTP/1.1 202 Accepted
+Location: /revisiones/1
+Content-Type: application/json
+Content-Length: 60
+Date: Wed, 21 Oct 2026 13:17:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"servicio":2,"estado":"pendiente","resultado":null}
+$ curl -i http://127.0.0.1:18080/revisiones/1
+HTTP/1.1 200 OK
+Retry-After: 1
+Content-Type: application/json
+Content-Length: 60
+Date: Wed, 21 Oct 2026 13:17:36 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"servicio":2,"estado":"pendiente","resultado":null}
+$ sleep 2
+
+$ curl -i http://127.0.0.1:18080/revisiones/1
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 111
+Date: Wed, 21 Oct 2026 13:17:38 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"servicio":2,"estado":"terminada","resultado":{"estado":"CAIDO","codigo":503,"ms":11,"detalle":"503"}}
+$ node fig01_02.ts 1
+202 Accepted; seguimiento en /revisiones/2
+consulta 1: 200 pendiente, Retry-After: 1
+consulta 2: 200 terminada
+resultado: {"estado":"ARRIBA","codigo":200,"ms":1,"detalle":"200"}
+$ curl -i -X DELETE http://127.0.0.1:18080/servicios/4
+HTTP/1.1 204 No Content
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+$ curl -i http://127.0.0.1:18080/servicios/4
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 24
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe el servicio 4
+$ curl -i -X DELETE http://127.0.0.1:18080/servicios/4
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 24
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe el servicio 4
+$ curl -i http://127.0.0.1:18080/servicios/1
+HTTP/1.1 200 OK
+ETag: "1-1-b27b3d9a"
+Content-Type: application/json
+Content-Length: 88
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+# --- etag E1
+$ curl -i http://127.0.0.1:18080/servicios/1 -H 'If-None-Match: "1-1-b27b3d9a"'
+HTTP/1.1 304 Not Modified
+ETag: "1-1-b27b3d9a"
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+$ curl -I http://127.0.0.1:18080/servicios/1
+HTTP/1.1 200 OK
+ETag: "1-1-b27b3d9a"
+Content-Type: application/json
+Content-Length: 88
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+$ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/1 -H 'If-None-Match: W/"1-1-b27b3d9a"'
+304
+$ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/1 -H 'If-None-Match: "9-9-00000000", "1-1-b27b3d9a"'
+304
+$ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/1 -H 'If-None-Match: *'
+304
+# --- terminal del revisor (arranque 2):
+revisor en http://127.0.0.1:18080
+POST /servicios
+POST /servicios/2/revisiones
+GET /revisiones/1
+GET /revisiones/1
+POST /servicios/1/revisiones
+GET /revisiones/2
+GET /revisiones/2
+DELETE /servicios/4
+GET /servicios/4
+DELETE /servicios/4
+GET /servicios/1
+GET /servicios/1
+HEAD /servicios/1
+GET /servicios/1
+GET /servicios/1
+GET /servicios/1
+# --- reiniciar-revisor
+$ curl -i http://127.0.0.1:18080/servicios/1 -H 'If-None-Match: "1-1-b27b3d9a"'
+HTTP/1.1 200 OK
+ETag: "1-1-ed399d6d"
+Content-Type: application/json
+Content-Length: 88
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+$ curl -i -X POST http://127.0.0.1:18080/viejo/servicios -H 'Content-Type: application/json' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 301 Moved Permanently
+Location: /servicios
+Content-Length: 0
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+$ curl -i -X POST http://127.0.0.1:18080/api/servicios -H 'Content-Type: application/json' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 308 Permanent Redirect
+Location: /servicios
+Content-Length: 0
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"metadatos","url":"http://169.254.169.254/latest/meta-data/"}'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 70
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+destino prohibido: 169.254.169.254:80: dirección privada o reservada
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"yo-mismo","url":"http://localhost:18080/mantenimiento"}'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 75
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+destino prohibido: localhost resuelve a una dirección privada o reservada
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"metadatos-2","url":"http://100.100.100.200/latest/meta-data/"}'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 70
+Date: Wed, 21 Oct 2026 13:17:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+destino prohibido: 100.100.100.200:80: dirección privada o reservada
+$ curl -s -w ' → %{http_code}\n' -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"tunel-1","url":"http://[2002:a00:1::1]/"}'
+destino prohibido: [2002:a00:1::1]:80: dirección privada o reservada
+ → 400
+$ curl -s -w ' → %{http_code}\n' -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"tunel-2","url":"http://[2002:808:808::1]/"}'
+{"id":4,"nombre":"tunel-2","url":"http://[2002:808:808::1]/","limite_ms":2000}
+ → 201
+# --- terminal del revisor (arranque 3):
+revisor en http://127.0.0.1:18080
+GET /servicios/1
+POST /viejo/servicios
+POST /api/servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+# --- reiniciar-revisor REVISOR_DESTINOS=127.0.0.1:9
+$ node fig01_02.ts 1
+202 Accepted; seguimiento en /revisiones/1
+consulta 1: 200 pendiente, Retry-After: 1
+consulta 2: 200 terminada
+resultado: {"estado":"CAIDO","codigo":null,"ms":null,"detalle":"destino prohibido: 127.0.0.1:18081: dirección privada o reservada"}
+# --- terminal del revisor (arranque 4):
+revisor en http://127.0.0.1:18080
+POST /servicios/1/revisiones
+GET /revisiones/1
+GET /revisiones/1
+# --- reiniciar-revisor
+$ curl -i -L http://127.0.0.1:18080/viejo/servicios -H 'Content-Type: application/json' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 301 Moved Permanently
+Location: /servicios
+Content-Length: 0
+Date: Wed, 21 Oct 2026 13:17:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 275
+Date: Wed, 21 Oct 2026 13:17:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicios":[{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000},{"id":2,"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/503","limite_ms":2000},{"id":3,"nombre":"nomina","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}]}
+$ curl -i -L http://127.0.0.1:18080/api/servicios -H 'Content-Type: application/json' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 308 Permanent Redirect
+Location: /servicios
+Content-Length: 0
+Date: Wed, 21 Oct 2026 13:17:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+HTTP/1.1 201 Created
+Location: /servicios/4
+ETag: "4-1-aacab17b"
+Content-Type: application/json
+Content-Length: 86
+Date: Wed, 21 Oct 2026 13:17:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":4,"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+$ curl -i http://127.0.0.1:18080/servicios
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 361
+Date: Wed, 21 Oct 2026 13:17:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicios":[{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000},{"id":2,"nombre":"pagos","url":"http://127.0.0.1:18081/codigo/503","limite_ms":2000},{"id":3,"nombre":"nomina","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000},{"id":4,"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}]}
+$ curl -i -X POST -L http://127.0.0.1:18080/viejo/servicios -H 'Content-Type: application/json' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 301 Moved Permanently
+Location: /servicios
+Content-Length: 0
+Date: Wed, 21 Oct 2026 13:17:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 21
+Date: Wed, 21 Oct 2026 13:17:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el cuerpo no es JSON
+$ curl -i -X PATCH http://127.0.0.1:18080/servicios/1
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 19
+Date: Wed, 21 Oct 2026 13:17:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe esa ruta
+# --- terminal del revisor (arranque 5):
+revisor en http://127.0.0.1:18080
+POST /viejo/servicios
+GET /servicios
+POST /api/servicios
+POST /servicios
+GET /servicios
+POST /viejo/servicios
+POST /servicios
+PATCH /servicios/1
+# --- detener

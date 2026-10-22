@@ -1,0 +1,12 @@
+$ node fig01_02.ts 1
+202 Accepted; seguimiento en /revisiones/2
+consulta 1: 200 pendiente, Retry-After: 1
+consulta 2: 200 terminada
+resultado: {"estado":"ARRIBA","codigo":200,"ms":1,"detalle":"200"}
+
+# --- con el revisor arrancado como REVISOR_DESTINOS=127.0.0.1:9 node servidor.ts
+$ node fig01_02.ts 1
+202 Accepted; seguimiento en /revisiones/1
+consulta 1: 200 pendiente, Retry-After: 1
+consulta 2: 200 terminada
+resultado: {"estado":"CAIDO","codigo":null,"ms":null,"detalle":"destino prohibido: 127.0.0.1:18081: dirección privada o reservada"}

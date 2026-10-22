@@ -1,0 +1,127 @@
+$ node fig00_02.ts
+banco de pruebas en http://127.0.0.1:18080/codigo/NNN
+
+$ curl -i http://127.0.0.1:18080/codigo/503
+HTTP/1.1 503 Service Unavailable
+Retry-After: 120
+Content-Type: text/plain; charset=utf-8
+Content-Length: 50
+Date: Wed, 21 Oct 2026 08:05:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+503 Service Unavailable
+lo pediste en /codigo/503
+$ curl -i http://127.0.0.1:18080/codigo/201
+HTTP/1.1 201 Created
+Location: /servicios/demo
+Content-Type: text/plain; charset=utf-8
+Content-Length: 38
+Date: Wed, 21 Oct 2026 08:05:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+201 Created
+lo pediste en /codigo/201
+$ curl -i http://127.0.0.1:18080/codigo/204
+HTTP/1.1 204 No Content
+Date: Wed, 21 Oct 2026 08:05:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+$ curl -i http://127.0.0.1:18080/codigo/205
+HTTP/1.1 205 Reset Content
+Date: Wed, 21 Oct 2026 22:00:20 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+$ curl -i http://127.0.0.1:18080/codigo/401
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer realm="revisor"
+Content-Type: text/plain; charset=utf-8
+Content-Length: 43
+Date: Wed, 21 Oct 2026 08:05:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+401 Unauthorized
+lo pediste en /codigo/401
+$ curl -i -X DELETE http://127.0.0.1:18080/codigo/200
+HTTP/1.1 405 Method Not Allowed
+Allow: GET, HEAD
+Content-Type: text/plain; charset=utf-8
+Content-Length: 56
+Date: Wed, 21 Oct 2026 08:05:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+405 Method Not Allowed
+el banco solo atiende GET y HEAD
+$ curl -i http://127.0.0.1:18080/servicios
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 68
+Date: Wed, 21 Oct 2026 08:05:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+404 Not Found
+la única ruta es /codigo/NNN; prueba con /codigo/503
+$ curl -i http://127.0.0.1:18080/codigo/103
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 76
+Date: Wed, 21 Oct 2026 08:05:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+400 Bad Request
+un 1xx es una respuesta intermedia: no puede ser la última
+$ curl -f http://127.0.0.1:18080/codigo/200
+200 OK
+lo pediste en /codigo/200
+$ echo $?
+0
+$ curl -f http://127.0.0.1:18080/codigo/503
+curl: (22) The requested URL returned error: 503
+$ echo $?
+22
+$ curl -I http://127.0.0.1:18080/codigo/418
+HTTP/1.1 418 I'm a Teapot
+Content-Type: text/plain; charset=utf-8
+Content-Length: 57
+Date: Wed, 21 Oct 2026 08:05:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+$ curl -s -o /dev/null -w '%{http_code}\n' -f http://127.0.0.1:18080/codigo/226; echo $?
+226
+0
+$ curl -s -o /dev/null -w '%{http_code}\n' -f http://127.0.0.1:18080/codigo/418; echo $?
+418
+22
+$ curl -s -o /dev/null -w '%{http_code}\n' -f http://127.0.0.1:18080/codigo/451; echo $?
+451
+22
+$ curl -s -o /dev/null -w '%{http_code}\n' -f http://127.0.0.1:18080/codigo/799; echo $?
+799
+22
+$ curl -i -L http://127.0.0.1:18080/codigo/308
+HTTP/1.1 308 Permanent Redirect
+Location: /codigo/200
+Content-Type: text/plain; charset=utf-8
+Content-Length: 49
+Date: Wed, 21 Oct 2026 08:05:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Content-Length: 33
+Date: Wed, 21 Oct 2026 08:05:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+200 OK
+lo pediste en /codigo/200

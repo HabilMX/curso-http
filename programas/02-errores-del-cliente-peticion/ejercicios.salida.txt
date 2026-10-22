@@ -1,0 +1,155 @@
+$ curl -i -X PATCH http://127.0.0.1:18080/servicios/1
+HTTP/1.1 405 Method Not Allowed
+Allow: GET, HEAD, DELETE
+Content-Type: text/plain; charset=utf-8
+Content-Length: 35
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+PATCH no se admite en /servicios/1
+
+$ curl -i -X DELETE http://127.0.0.1:18080/servicios/99
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer realm="revisor"
+Content-Type: text/plain; charset=utf-8
+Content-Length: 20
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+falta la credencial
+
+$ curl -i -X DELETE http://127.0.0.1:18080/servicios/99 -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 403 Forbidden
+Content-Type: text/plain; charset=utf-8
+Content-Length: 74
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+tu credencial solo puede leer; para escribir pide una con rol de escritor
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: text/plain' -d 'catalogo'
+HTTP/1.1 415 Unsupported Media Type
+Accept: application/json
+Content-Type: text/plain; charset=utf-8
+Content-Length: 51
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el cuerpo debe ser application/json, no text/plain
+
+$ curl -i http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-b'
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 24
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe el servicio 1
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios/1/revisiones -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 403 Forbidden
+Content-Type: text/plain; charset=utf-8
+Content-Length: 74
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+tu credencial solo puede leer; para escribir pide una con rol de escritor
+
+$ curl -i http://127.0.0.1:18080/nada
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 19
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe esa ruta
+
+$ curl -i -X DELETE http://127.0.0.1:18080/revisiones/1 -H 'Authorization: Bearer lectura-a'
+HTTP/1.1 405 Method Not Allowed
+Allow: GET, HEAD
+Content-Type: text/plain; charset=utf-8
+Content-Length: 37
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+DELETE no se admite en /revisiones/1
+
+$ curl -I http://127.0.0.1:18080/servicios
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer realm="revisor"
+Content-Type: text/plain; charset=utf-8
+Content-Length: 20
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+$ curl -i -X PUT http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a'
+HTTP/1.1 405 Method Not Allowed
+Allow: GET, HEAD, POST
+Content-Type: text/plain; charset=utf-8
+Content-Length: 31
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+PUT no se admite en /servicios
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d 'null'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 31
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el cuerpo no es un objeto JSON
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '7'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 31
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el cuerpo no es un objeto JSON
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '[]'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 31
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+el cuerpo no es un objeto JSON
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{}'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 20
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+faltan nombre y url
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json; charset=utf-8' -d '{"nombre":"agenda","url":"http://127.0.0.1:18081/codigo/200","limite_ms":"rapido"}'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 47
+Date: Wed, 21 Oct 2026 13:18:13 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+limite_ms debe ser un entero entre 100 y 10000
+

@@ -1,0 +1,6 @@
+$ node fig08_04.ts con-fetch   # es el defecto de la lección 7
+$ consultar("http://rebote.ejemplo:18081/")   con el cliente de con-fetch
+  pregunta 1 al DNS: rebote.ejemplo -> 127.0.0.1
+  pregunta 2 al DNS: rebote.ejemplo -> ::1
+{"tipo":"respuesta","codigo":299,"ms":36,"reintentarEn":null}
+el DNS fue preguntado 2 veces

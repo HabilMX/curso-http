@@ -1,0 +1,80 @@
+## A: mentiroso
+$ curl -i http://127.0.0.1:18080/servicios
+HTTP/1.1 200 OK
+content-type: application/json
+cache-control: max-age=5, stale-if-error=600
+Date: Wed, 21 Oct 2026 07:28:26 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"servicios":["catalogo","pagos"]}
+$ curl -X PUT http://127.0.0.1:18081/modo/mentiroso
+$ sleep 6
+$ curl -i http://127.0.0.1:18080/servicios
+HTTP/1.1 200 OK
+content-type: application/json
+cache-control: max-age=5, stale-if-error=600
+Date: Wed, 21 Oct 2026 07:28:33 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"error":"la base de datos no está disponible"}
+$ curl -i http://127.0.0.1:18080/servicios
+HTTP/1.1 200 OK
+Content-Type: application/json
+Age: 0
+Date: Wed, 21 Oct 2026 07:28:33 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"error":"la base de datos no está disponible"}
+$ curl -f http://127.0.0.1:18081/servicios
+{"error":"la base de datos no está disponible"}
+$ echo $?
+0
+
+--- terminal del programa:
+origen en http://127.0.0.1:18081 (PUT /modo/sano|mentiroso|honesto)
+caché en http://127.0.0.1:18080/servicios
+caché: guardé la respuesta 200 por 5 s
+origen: ahora estoy mentiroso
+caché: guardé la respuesta 200 por 5 s
+caché: tengo una copia fresca; no le pregunto al origen
+
+## B: honesto
+$ curl -i http://127.0.0.1:18080/servicios
+HTTP/1.1 200 OK
+content-type: application/json
+cache-control: max-age=5, stale-if-error=600
+Date: Wed, 21 Oct 2026 07:28:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"servicios":["catalogo","pagos"]}
+$ curl -X PUT http://127.0.0.1:18081/modo/honesto
+$ sleep 6
+$ curl -i http://127.0.0.1:18080/servicios
+HTTP/1.1 200 OK
+Content-Type: application/json
+Age: 6
+Date: Wed, 21 Oct 2026 07:28:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"servicios":["catalogo","pagos"]}
+$ curl -f http://127.0.0.1:18081/servicios
+curl: (22) The requested URL returned error: 503
+$ echo $?
+22
+
+--- terminal del programa:
+origen en http://127.0.0.1:18081 (PUT /modo/sano|mentiroso|honesto)
+caché en http://127.0.0.1:18080/servicios
+caché: guardé la respuesta 200 por 5 s
+origen: ahora estoy honesto
+caché: el origen respondió 503; sirvo la copia anterior

@@ -1,0 +1,6 @@
+$ node --input-type=module -e 'import { consultar } from "./cliente.ts"; console.log(JSON.stringify(await consultar(process.argv[1], 8000)))' https://example.com/
+{"tipo":"respuesta","codigo":200,"ms":484,"reintentarEn":null}
+$ node --input-type=module -e 'import { consultar } from "./cliente.ts"; console.log(JSON.stringify(await consultar(process.argv[1], 8000)))' https://expired.badssl.com/
+{"tipo":"respuesta-invalida","motivo":"certificate has expired"}
+$ node --input-type=module -e 'import { consultar } from "./cliente.ts"; console.log(JSON.stringify(await consultar(process.argv[1], 8000)))' https://wrong.host.badssl.com/
+{"tipo":"respuesta-invalida","motivo":"Hostname/IP does not match certificate's altnames: Host: wrong.host.badssl.com. is not in the cert's altnames: DNS:*.badssl.com, DNS:badssl.com"}

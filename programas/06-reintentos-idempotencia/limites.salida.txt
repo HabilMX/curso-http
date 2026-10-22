@@ -1,0 +1,67 @@
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-avisos-1' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+201 /servicios/7
+
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-avisos-1' -d '{ "nombre" : "avisos" ,  "url" : "http://127.0.0.1:18081/codigo/200" }'
+201 /servicios/7
+
+$ curl -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-avisos-1' -d '{"url":"http://127.0.0.1:18081/codigo/200","nombre":"avisos"}'
+{"type":"https://revisor.example/problemas/llave-reutilizada","title":"Esa Idempotency-Key ya se usó con otra petición","status":422,"detail":"la llave alta-avisos-1 ya se usó con un cuerpo distinto","instance":"/servicios"}
+ [422]
+
+$ curl -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-avisos-1' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}'
+{"type":"https://revisor.example/problemas/llave-reutilizada","title":"Esa Idempotency-Key ya se usó con otra petición","status":422,"detail":"la llave alta-avisos-1 ya se usó con un cuerpo distinto","instance":"/servicios"}
+ [422]
+
+$ curl -w ' [%{http_code}]\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-agenda-1' -d '{"nombre":"agenda","url":"ftp://agenda"}'
+{"type":"https://revisor.example/problemas/datos-invalidos","title":"Los datos no se pueden cumplir","status":422,"detail":"1 dato(s) no se pueden cumplir","instance":"/servicios","errors":[{"detail":"debe ser una dirección http o https","pointer":"#/url"}]}
+ [422]
+
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-agenda-1' -d '{"nombre":"agenda","url":"http://127.0.0.1:18081/codigo/200"}'
+201 /servicios/8
+
+$ curl -o /dev/null -w '%{http_code}\n' -X DELETE http://127.0.0.1:18080/servicios/7 -H 'Authorization: Bearer escritura-a'
+204
+
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-avisos-1' -d '{"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200"}'
+HTTP/1.1 201 Created
+Location: /servicios/7
+ETag: "7-1-5f8dc707"
+Content-Type: application/json
+Content-Length: 86
+Date: Wed, 21 Oct 2026 22:25:53 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":7,"nombre":"avisos","url":"http://127.0.0.1:18081/codigo/200","limite_ms":2000}
+
+$ curl -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/7 -H 'Authorization: Bearer escritura-a'
+410
+
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-b' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-agenda-1' -d '{"nombre":"agenda","url":"http://127.0.0.1:18081/codigo/200"}'
+201 /servicios/9
+
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: "alta-agenda-1"' -d '{"nombre":"agenda","url":"http://127.0.0.1:18081/codigo/200"}'
+409 
+
+$ kill $REV; wait $REV 2>/dev/null; node servidor.ts >> servidor.log 2>&1 & REV=$!; sleep 1
+
+$ curl -o /dev/null -w '%{http_code} %header{location}\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -H 'Idempotency-Key: alta-agenda-1' -d '{"nombre":"agenda","url":"http://127.0.0.1:18081/codigo/200"}'
+201 /servicios/7
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios
+POST /servicios
+idempotencia: la llave alta-avisos-1 ya se atendió; repito su respuesta
+POST /servicios
+POST /servicios
+POST /servicios
+POST /servicios
+DELETE /servicios/7
+POST /servicios
+idempotencia: la llave alta-avisos-1 ya se atendió; repito su respuesta
+GET /servicios/7
+POST /servicios
+POST /servicios
+revisor en http://127.0.0.1:18080
+POST /servicios

@@ -1,0 +1,45 @@
+$ node matriz23.ts
+ok    200 consultar un servicio
+ok    304 consultar sin cambios
+ok    201 dar de alta
+ok    202 pedir revisión
+ok    204 retirar
+ok    301 ruta vieja con 301
+ok    308 ruta vieja con 308
+ok    400 cuerpo ilegible
+ok    401 sin credencial
+ok    403 lectura que intenta escribir
+ok    404 servicio que no existe
+ok    405 método no admitido
+ok    409 nombre repetido
+ok    410 servicio retirado
+ok    412 etiqueta vencida
+ok    415 formato no admitido
+ok    422 datos imposibles
+ok    428 cambio sin If-Match
+ok    429 demasiadas revisiones
+ok    500 el defecto a propósito
+ok    502 el servicio responde basura
+ok    503 mantenimiento
+ok    504 el servicio no responde a tiempo
+ok    misma Idempotency-Key: no duplica; con otro cuerpo, 422
+ok    SSRF: http://169.254.169.254/latest/meta-data/ se rechaza con 422 destino-prohibido
+ok    SSRF: http://localhost:18080/mantenimiento se rechaza con 422 destino-prohibido
+ok    credencial heredada de Object.prototype (constructor, __proto__, toString): 401
+ok    If-None-Match con lista, W/ y * (débil): 304; If-Match con W/: 412; con lista o *: 200
+ok    actualización perdida: dos PUT a la vez con la misma If-Match: 200 y 412, gana la primera que escribe
+ok    orden del PUT: text/plain da 415 con etiqueta vieja o sin ella; retirado en el hueco, 410
+ok    esquema sin distinguir mayúsculas (bearer: 200); Basic: reto sin error="invalid_token"
+ok    método heredado de Object.prototype (constructor, toString, __proto__): 405
+ok    cuerpo JSON que no es objeto (null, 7, "texto", []): 400, y el revisor sigue vivo
+ok    cuerpo de más de 16 KiB: 413 (con Content-Length y por partes); en el tope, 400; el revisor sigue vivo
+ok    429 por credencial: la cuarta consulta en vivo, 429; otra credencial no lo paga; enumerar ids llega al 429
+ok    Retry-After: 1.5, -1 y «12 30» se ignoran; las tres formas de HTTP-date dan lo mismo (GMT)
+ok    SSRF: 12 direcciones de uso especial (CGNAT, NAT64, 6to4, compatible, 64:ff9b:1::/48, 240/4, 198.18/15, TEST-NET, 2001:db8::, Teredo, multicast): 422; 6to4 con IPv4 pública: 201
+ok    la pasarela reenvía Content-Length; sin revisor responde 502 y sigue viva; alta-segura termina al agotar los intentos, también sin conexión
+ok    alta-segura decide: un 4xx sale con 1; obedece Retry-After si es razonable y no insiste si pide mucho; se corta por tiempo ante un servidor mudo; el 409 de llave en curso se reintenta y el de nombre repetido no
+ok    el banco responde el 205 sin cuerpo, con Content-Length: 0 y sin Transfer-Encoding
+ok    ETag tras reiniciar el revisor: la vieja no coincide (200, no un 304 falso)
+
+41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+(código de salida: 0)

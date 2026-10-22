@@ -1,0 +1,27 @@
+$ bash fig08_03.sh
+ok    200 consultar un servicio
+ok    304 consultar sin cambios
+ok    201 dar de alta
+ok    202 pedir revisión
+ok    204 retirar
+ok    301 ruta vieja con 301
+ok    308 ruta vieja con 308
+ok    400 cuerpo ilegible
+ok    401 sin credencial
+ok    403 lectura que intenta escribir
+ok    404 servicio que no existe
+ok    405 método no admitido
+ok    409 nombre repetido
+ok    410 servicio retirado
+ok    412 etiqueta vencida
+ok    415 formato no admitido
+ok    422 datos imposibles
+ok    428 cambio sin If-Match
+ok    429 demasiadas revisiones
+ok    500 el defecto a propósito
+ok    502 el servicio responde basura
+ok    503 mantenimiento
+ok    504 el servicio no responde a tiempo
+
+23 de 23 escenarios pasaron
+(código de salida: 0)

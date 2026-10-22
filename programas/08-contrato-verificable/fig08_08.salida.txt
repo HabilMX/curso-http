@@ -1,0 +1,32 @@
+$ ./fig08_08.sh 30
+corrida 1: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 2: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 3: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 4: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 5: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 6: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 7: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 8: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 9: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 10: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 11: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 12: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 13: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 14: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 15: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 16: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 17: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 18: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 19: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 20: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 21: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 22: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 23: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 24: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 25: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 26: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 27: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 28: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 29: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+corrida 30: código 0; 41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+fig08_01/matriz23.ts: 0 de 30 corridas fallaron

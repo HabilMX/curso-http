@@ -1,0 +1,77 @@
+$ node alta-segura.ts invalida ftp://archivos; echo "(código de salida: $?)"
+intento 1: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió una respuesta completa del revisor"}
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: 422 {"type":"https://revisor.example/problemas/datos-invalidos","title":"Los datos no se pueden cumplir","status":422,"detail":"1 dato(s) no se pueden cumplir","instance":"/servicios","errors":[{"detail":"debe ser una dirección http o https","pointer":"#/url"}]}
+el servidor respondió 422: repetir lo mismo no lo arregla
+(código de salida: 1)
+
+$ curl -o /dev/null -w '%{http_code}\n' -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":true}'
+204
+
+$ node alta-segura.ts enmantenimiento http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: 502 {"type":"about:blank","title":"Bad Gateway","status":502,"detail":"la pasarela no recibió una respuesta completa del revisor"}
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: 503 {"type":"https://revisor.example/problemas/en-mantenimiento","title":"El revisor está en mantenimiento","status":503,"detail":"el revisor está en mantenimiento","instance":"/servicios"}
+el servidor pidió esperar 120 s (Retry-After), más de los 5 s que este programa espera; no se reintenta; repetir más tarde con la llave bf9d35dc-9d6d-4ca8-9a92-da8dcd058cd3 es seguro
+(código de salida: 1)
+
+$ curl -o /dev/null -w '%{http_code}\n' -X PUT http://127.0.0.1:18080/mantenimiento -H 'Authorization: Bearer admin' -H 'Content-Type: application/json' -d '{"activo":false}'
+204
+
+$ node fig06_04.ts 503:2 201
+
+$ node alta-segura.ts paciente http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: 503 {"type":"about:blank","title":"respuesta de mentira","status":503}
+  el servidor pide esperar 2 s (Retry-After); espero 2 s y reintento con la misma llave
+intento 2: 201 {"id":99}
+(código de salida: 0)
+
+--- terminal del servidor de mentira:
+servidor de mentira en http://127.0.0.1:18082
+petición 1: 503:2
+petición 2: 201
+
+$ node fig06_04.ts 409:en-curso 201
+
+$ node alta-segura.ts en-curso http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: 409 {"type":"https://revisor.example/problemas/llave-en-curso","title":"respuesta de mentira","status":409}
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: 201 {"id":99}
+(código de salida: 0)
+
+--- terminal del servidor de mentira:
+servidor de mentira en http://127.0.0.1:18082
+petición 1: 409:en-curso
+petición 2: 201
+
+$ node fig06_04.ts 409
+
+$ node alta-segura.ts repetida http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: 409 {"type":"about:blank","title":"respuesta de mentira","status":409}
+el servidor respondió 409: repetir lo mismo no lo arregla
+(código de salida: 1)
+
+--- terminal del servidor de mentira:
+servidor de mentira en http://127.0.0.1:18082
+petición 1: 409
+
+$ node fig06_04.ts mudo
+
+$ ALTA_LIMITE_MS=300 node alta-segura.ts muda http://127.0.0.1:18081/codigo/200; echo "(código de salida: $?)"
+intento 1: sin respuesta (tiempo agotado: 300 ms)
+  espero entre 0 y 500 ms y reintento con la misma llave
+intento 2: sin respuesta (tiempo agotado: 300 ms)
+  espero entre 0 y 1000 ms y reintento con la misma llave
+intento 3: sin respuesta (tiempo agotado: 300 ms)
+  espero entre 0 y 2000 ms y reintento con la misma llave
+intento 4: sin respuesta (tiempo agotado: 300 ms)
+se agotaron los 4 intentos sin una respuesta definitiva; repetir más tarde con la llave f4e16950-99e9-4504-86b8-c95e2c52cc04 es seguro
+(código de salida: 1)
+
+--- terminal del servidor de mentira:
+servidor de mentira en http://127.0.0.1:18082
+petición 1: mudo
+petición 2: mudo
+petición 3: mudo
+petición 4: mudo
+

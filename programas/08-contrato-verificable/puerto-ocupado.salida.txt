@@ -1,0 +1,19 @@
+$ cd rota && node servidor.ts &      # un revisor con el defecto, que se te olvidó apagar
+$ cd ../fig08_01 && node matriz23.ts | grep -v "^ok"
+FALLA 400 cuerpo ilegible: tipo application/json, se esperaba application/problem+json
+FALLA 401 sin credencial: tipo application/json, se esperaba application/problem+json
+FALLA 403 lectura que intenta escribir: tipo application/json, se esperaba application/problem+json
+FALLA 404 servicio que no existe: tipo application/json, se esperaba application/problem+json
+FALLA 405 método no admitido: tipo application/json, se esperaba application/problem+json
+FALLA 409 nombre repetido: tipo application/json, se esperaba application/problem+json
+FALLA 410 servicio retirado: tipo application/json, se esperaba application/problem+json
+FALLA 412 etiqueta vencida: tipo application/json, se esperaba application/problem+json
+FALLA 415 formato no admitido: tipo application/json, se esperaba application/problem+json
+FALLA 422 datos imposibles: tipo application/json, se esperaba application/problem+json
+FALLA 428 cambio sin If-Match: tipo application/json, se esperaba application/problem+json
+FALLA 429 demasiadas revisiones: falta retry-after; tipo application/json, se esperaba application/problem+json
+FALLA 500 el defecto a propósito: tipo application/json, se esperaba application/problem+json
+FALLA 502 el servicio responde basura: tipo application/json, se esperaba application/problem+json
+FALLA 503 mantenimiento: falta retry-after; tipo application/json, se esperaba application/problem+json
+FALLA 504 el servicio no responde a tiempo: tipo application/json, se esperaba application/problem+json
+ESTADO: la matriz seguía esperando a los 60 s; se detuvo por su PID

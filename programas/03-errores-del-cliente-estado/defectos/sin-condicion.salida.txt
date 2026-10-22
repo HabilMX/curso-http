@@ -1,0 +1,27 @@
+$ curl -i -X PUT http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}'
+HTTP/1.1 200 OK
+ETag: "1-2-dedb68a8"
+Content-Type: application/json
+Content-Length: 88
+Date: Wed, 21 Oct 2026 13:18:25 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}
+
+$ node fig03_02.ts
+Ana      lee:    200 "1-2-dedb68a8" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}
+Beto     lee:    200 "1-2-dedb68a8" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":1500}
+Ana      guarda: 200 "1-3-dedb68a8" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/204","limite_ms":1500}
+Beto     guarda: 200 "1-4-dedb68a8" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":3000}
+Al final lee:    200 "1-4-dedb68a8" {"id":1,"nombre":"catalogo","url":"http://127.0.0.1:18081/codigo/200","limite_ms":3000}
+SE PERDIÓ el cambio de Ana, y nadie recibió un error
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+PUT /servicios/1
+GET /servicios/1
+GET /servicios/1
+PUT /servicios/1
+PUT /servicios/1
+GET /servicios/1

@@ -1,0 +1,12 @@
+$ node fig08_05.ts   # contra el revisor con defectos/cierre-brusco/respuestas.ts
+  382  respuesta 413
+    4  sin respuesta: ECONNRESET
+   14  sin respuesta: EPIPE
+400 intentos
+
+$ for i in 1 2 3 4 5; do printf "corrida $i:"; node fig08_05.ts | grep "respuesta 413"; done
+corrida 1:  356  respuesta 413
+corrida 2:  358  respuesta 413
+corrida 3:  357  respuesta 413
+corrida 4:  363  respuesta 413
+corrida 5:  346  respuesta 413

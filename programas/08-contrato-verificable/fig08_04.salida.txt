@@ -1,0 +1,14 @@
+$ node fig08_04.ts con-fetch
+$ consultar("http://rebote.ejemplo:18081/")   con el cliente de con-fetch
+  pregunta 1 al DNS: rebote.ejemplo -> 127.0.0.1
+  pregunta 2 al DNS: rebote.ejemplo -> ::1
+{"tipo":"respuesta","codigo":299,"ms":8,"reintentarEn":null}
+el DNS fue preguntado 2 veces
+(código de salida: 0)
+
+$ node fig08_04.ts fig08_01
+$ consultar("http://rebote.ejemplo:18081/")   con el cliente de fig08_01
+  pregunta 1 al DNS: rebote.ejemplo -> 127.0.0.1
+{"tipo":"respuesta","codigo":200,"ms":6,"reintentarEn":null}
+el DNS fue preguntado 1 vez
+(código de salida: 0)

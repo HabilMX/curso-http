@@ -1,0 +1,11 @@
+$ node fig04_02.ts
+    2 ms  permitida
+  950 ms  permitida
+  961 ms  permitida
+ 1005 ms  permitida
+ 1011 ms  permitida
+ 1016 ms  permitida
+ 1021 ms  rechazada: Retry-After 1
+
+límite: 3 cada 1000 ms
+permitidas entre 950 y 1016 ms: 5

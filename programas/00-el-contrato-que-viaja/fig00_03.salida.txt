@@ -1,0 +1,10 @@
+(con el banco fig00_02.ts corriendo)
+$ node fig00_03.ts
+200  ok=true   se trata como 200 (éxito)
+204  ok=true   se trata como 204 (éxito)
+299  ok=true   se trata como 200 (éxito)
+308  ok=false  se trata como 308 (redirección)
+404  ok=false  se trata como 404 (error del cliente)
+471  ok=false  se trata como 400 (error del cliente)
+503  ok=false  se trata como 503 (error del servidor)
+600  ok=false  se trata como 500 (error del servidor)

@@ -1,0 +1,33 @@
+$ node fig07_06.ts
+CÓDIGO  ACCIÓN        REINTENTA  MOTIVO
+206     seguir        no         el 206 no está en la tabla: se trata como un 200 (salió bien)
+299     seguir        no         el 299 no está en la tabla: se trata como un 200 (salió bien)
+302     corregir      no         redirección temporal: el cliente no la sigue solo; revisa la dirección de Location
+307     corregir      no         redirección temporal que conserva el método: el cliente no la sigue solo; revisa Location
+408     esperar       sí         el servidor no recibió la petición completa a tiempo: repítela tal cual, en una conexión nueva (RFC 9110, 15.5.9)
+418     corregir      no         el 418 no está en la tabla: se trata como un 400 (la petición no se puede leer)
+425     esperar       sí         el servidor no quiso procesar datos tempranos: repite la petición, esta vez sin ellos (RFC 8470, 5.2)
+451     corregir      no         el 451 no está en la tabla: se trata como un 400 (la petición no se puede leer)
+501     rendirse      no         el 501 no está en la tabla: se trata como un 500 (falla del servidor: repórtala con su instance)
+507     rendirse      no         el 507 no está en la tabla: se trata como un 500 (falla del servidor: repórtala con su instance)
+599     rendirse      no         el 599 no está en la tabla: se trata como un 500 (falla del servidor: repórtala con su instance)
+600     rendirse      no         600 no es un código de HTTP (el RFC 9110 admite de 100 a 599): se procesa como un 5xx
+799     rendirse      no         799 no es un código de HTTP (el RFC 9110 admite de 100 a 599): se procesa como un 5xx
+
+--- terminal del laboratorio:
+laboratorio en http://127.0.0.1:18081/codigo/NNN
+GET /codigo/206
+GET /codigo/299
+GET /codigo/302
+GET /codigo/307
+GET /codigo/408
+GET /codigo/418
+GET /codigo/425
+GET /codigo/451
+GET /codigo/501
+GET /codigo/507
+GET /codigo/599
+GET /codigo/600
+GET /codigo/799
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080

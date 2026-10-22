@@ -1,0 +1,29 @@
+$ node matriz23.ts   # la matriz de siempre, contra el servidor al que le falta instance
+FALLA 500 el defecto a propósito: instance no es urn:uuid
+
+40 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+(código de salida: 1)
+
+$ node matriz23.ts   # la matriz ampliada, contra el servidor bueno
+
+41 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).
+
+$ node matriz23.ts   # la matriz ampliada, contra el servidor al que le falta instance
+FALLA 400 cuerpo ilegible: falta instance
+FALLA 401 sin credencial: falta instance
+FALLA 403 lectura que intenta escribir: falta instance
+FALLA 404 servicio que no existe: falta instance
+FALLA 405 método no admitido: falta instance
+FALLA 409 nombre repetido: falta instance
+FALLA 410 servicio retirado: falta instance
+FALLA 412 etiqueta vencida: falta instance
+FALLA 415 formato no admitido: falta instance
+FALLA 422 datos imposibles: falta instance
+FALLA 428 cambio sin If-Match: falta instance
+FALLA 429 demasiadas revisiones: falta instance
+FALLA 500 el defecto a propósito: falta instance; instance no es urn:uuid
+FALLA 502 el servicio responde basura: falta instance
+FALLA 503 mantenimiento: falta instance
+FALLA 504 el servicio no responde a tiempo: falta instance
+
+25 de 41 comprobaciones pasaron (23 escenarios de código y 18 adicionales).

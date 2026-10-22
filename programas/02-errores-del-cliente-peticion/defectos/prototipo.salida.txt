@@ -1,0 +1,46 @@
+$ curl -i http://127.0.0.1:18080/servicios -H 'Authorization: Bearer constructor'
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 17
+Date: Wed, 21 Oct 2026 13:18:15 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicios":[]}
+
+$ curl -i http://127.0.0.1:18080/servicios -H 'Authorization: Bearer toString'
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 17
+Date: Wed, 21 Oct 2026 13:18:15 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"servicios":[]}
+
+$ curl -i -X DELETE http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer constructor'
+HTTP/1.1 403 Forbidden
+Content-Type: text/plain; charset=utf-8
+Content-Length: 74
+Date: Wed, 21 Oct 2026 13:18:15 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+tu credencial solo puede leer; para escribir pide una con rol de escritor
+
+$ curl -i http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer constructor'
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+Content-Length: 24
+Date: Wed, 21 Oct 2026 13:18:15 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+no existe el servicio 1
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+GET /servicios
+GET /servicios
+DELETE /servicios/1
+GET /servicios/1

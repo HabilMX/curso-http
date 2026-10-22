@@ -1,0 +1,6 @@
+$ node fig08_07.ts example.com
+{"nombre":"example.com","error":"EPROTO"}
+$ node fig08_07.ts expired.badssl.com
+{"nombre":"expired.badssl.com","error":"CERT_HAS_EXPIRED"}
+$ node fig08_07.ts wrong.host.badssl.com
+{"nombre":"wrong.host.badssl.com","error":"CERT_HAS_EXPIRED"}

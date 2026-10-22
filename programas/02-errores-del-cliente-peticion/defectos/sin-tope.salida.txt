@@ -1,0 +1,16 @@
+$ ps -o rss= -p $REV
+ 93056
+
+$ head -c 52428800 /dev/zero | tr '\0' 'a' | curl -sS -o /dev/null -w '%{http_code} en %{time_total} s\n' -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' --data-binary @-
+400 en 0.041348 s
+
+$ ps -o rss= -p $REV
+224064
+
+$ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/servicios/1 -H 'Authorization: Bearer lectura-a'
+200
+
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080
+POST /servicios
+GET /servicios/1

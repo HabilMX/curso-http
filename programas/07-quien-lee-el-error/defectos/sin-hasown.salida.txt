@@ -1,0 +1,68 @@
+$ node fig07_04.ts; echo "(código de salida: $?)"
+ok    los 23 códigos del curso caen en una de las seis acciones
+ok    corregir, reautenticar, reconciliar y rendirse nunca reintentan
+ok    un type conocido afina el código: el mismo 409 es esperar o reconciliar
+ok    un type que la tabla no conoce se decide por el código
+FALLA un type heredado de Object.prototype no revienta: se decide por el código
+      type constructor: TypeError: function is not iterable (cannot read property Symbol(Symbol.iterator))
+ok    un código que la tabla no lista cae en el x00 de su familia
+ok    traducir el title y el detail no cambia la decisión
+
+6 de 7 comprobaciones de la tabla pasaron
+(código de salida: 1)
+
+--- terminal del laboratorio:
+laboratorio en http://127.0.0.1:18081/codigo/NNN
+GET /codigo/200
+GET /codigo/201
+GET /codigo/202
+GET /codigo/204
+GET /codigo/301
+GET /codigo/304
+GET /codigo/308
+GET /codigo/400
+GET /codigo/401
+GET /codigo/403
+GET /codigo/404
+GET /codigo/405
+GET /codigo/409
+GET /codigo/410
+GET /codigo/412
+GET /codigo/415
+GET /codigo/422
+GET /codigo/428
+GET /codigo/429
+GET /codigo/500
+GET /codigo/502
+GET /codigo/503
+GET /codigo/504
+GET /codigo/200
+GET /codigo/201
+GET /codigo/202
+GET /codigo/204
+GET /codigo/301
+GET /codigo/304
+GET /codigo/308
+GET /codigo/400
+GET /codigo/401
+GET /codigo/403
+GET /codigo/404
+GET /codigo/405
+GET /codigo/409
+GET /codigo/410
+GET /codigo/412
+GET /codigo/415
+GET /codigo/422
+GET /codigo/428
+GET /codigo/429
+GET /codigo/500
+GET /codigo/502
+GET /codigo/503
+GET /codigo/504
+GET /codigo/299
+GET /codigo/418
+GET /codigo/451
+GET /codigo/507
+GET /codigo/599
+--- terminal del revisor:
+revisor en http://127.0.0.1:18080

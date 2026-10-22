@@ -1,0 +1,22 @@
+$ node fig08_05.ts   # contra el revisor con defectos/drenar-antes/respuestas.ts
+  400  respuesta 413
+400 intentos
+
+$ for i in 1 2 3 4 5; do printf "corrida $i:"; node fig08_05.ts | grep "respuesta 413"; done
+corrida 1:  400  respuesta 413
+corrida 2:  400  respuesta 413
+corrida 3:  400  respuesta 413
+corrida 4:  400  respuesta 413
+corrida 5:  400  respuesta 413
+$ node fig08_05.ts 100 1000
+  100  respuesta 413
+100 intentos
+$ node fig08_05.ts 100 1100
+    8  respuesta 413
+   19  sin respuesta: ECONNRESET
+   73  sin respuesta: EPIPE
+100 intentos
+$ node fig08_05.ts 100 3000
+   23  sin respuesta: ECONNRESET
+   77  sin respuesta: EPIPE
+100 intentos
