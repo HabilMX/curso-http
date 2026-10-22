@@ -1272,6 +1272,9 @@ import { revisarDestino } from "./destinos.ts";
 
 export async function revisar(url: string, limiteMs: number): Promise<Resultado> {
   // Antes de CADA conexión se vuelve a revisar el destino: el DNS pudo cambiar desde el alta.
+  // LÍMITE DECLARADO: esto NO cierra el DNS rebinding. fetch vuelve a resolver el nombre, y entre
+  // esta revisión y la conexión el nombre puede apuntar a otra IP. La lección 8 lo completa:
+  // se conecta a la IP ya validada, con http.request y su opción lookup.
   const veredicto = await revisarDestino(url);
   if (!veredicto.permitido) return { estado: "CAIDO", codigo: null, ms: null, detalle: `destino prohibido: ${veredicto.motivo}` };
   const inicio = performance.now();
@@ -1550,6 +1553,10 @@ function enviar(respuesta: ServerResponse, codigo: number, explicacion: string):
     cabeceras["Content-Type"] = "text/plain; charset=utf-8";
     cabeceras["Content-Length"] = String(Buffer.byteLength(cuerpo));
   }
+  // El 205 no se enmarca solo como el 204 y el 304 (RFC 9112, sección 6.3): sin Content-Length ni Transfer-Encoding
+  // terminaría al cerrar la conexión, y Node mandaría «Transfer-Encoding: chunked» con un cuerpo vacío.
+  // «Content-Length: 0» dice dónde termina sin mandar contenido.
+  if (codigo === 205) cabeceras["Content-Length"] = "0";
   if (nombre === undefined) {
     respuesta.writeHead(codigo, cabeceras);
   } else {

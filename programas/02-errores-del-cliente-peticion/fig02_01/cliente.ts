@@ -4,6 +4,9 @@ import { revisarDestino } from "./destinos.ts";
 
 export async function revisar(url: string, limiteMs: number): Promise<Resultado> {
   // Antes de CADA conexión se vuelve a revisar el destino: el DNS pudo cambiar desde el alta.
+  // LÍMITE DECLARADO: esto NO cierra el DNS rebinding. fetch vuelve a resolver el nombre, y entre
+  // esta revisión y la conexión el nombre puede apuntar a otra IP. La lección 8 lo completa:
+  // se conecta a la IP ya validada, con http.request y su opción lookup.
   const veredicto = await revisarDestino(url);
   if (!veredicto.permitido) return { estado: "CAIDO", codigo: null, ms: null, detalle: `destino prohibido: ${veredicto.motivo}` };
   const inicio = performance.now();
