@@ -705,6 +705,24 @@ La política del curso no es la única razonable, y vale la pena que sepas qué 
 
 El curso se queda con la frontera «leer frente a cumplir» por una razón que tiene que ver con quien recibe el error: un `400` le dice al cliente que **algo en la forma** de su petición está roto, normalmente un error de programación que hay que arreglar en el código; un `422` le dice que la forma está bien y que **los valores** no se aceptan, normalmente algo que escribió una persona y que se le puede mostrar en un formulario. Son dos acciones distintas, y la especificación tiene un código para cada una. Lo que importa más que la frontera exacta es que la API la **escriba** y la aplique igual en todas sus rutas: un cliente puede adaptarse a cualquiera de las dos políticas; a una API que usa las dos al azar, no.
 
+#### 3.6.4 Una URL con secretos también es `422`
+
+La regla de la Lección 1 sigue: `url` no puede llevar usuario, clave, consulta ni fragmento, porque el `revisor` la repite en cada representación. Ahora vive en `validar()`, como un renglón más: si la URL ni siquiera es `http` o `https`, el renglón dice eso; si lo es, pero trae algo que el `revisor` tendría que callar, dice esto otro. Y como el `PUT` también pasa por `validar()`, un cambio no puede meter por la puerta de atrás lo que el alta rechaza. Es `422` y no `400` por la política de esta lección: el cuerpo se leyó, y es la URL la que no se puede cumplir.
+
+```text
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"fuga","url":"http://usuario:clave@127.0.0.1:1/estado?token=SECRETO#x"}'
+HTTP/1.1 422 Unprocessable Content
+Content-Type: text/plain; charset=utf-8
+Content-Length: 67
+Date: Thu, 22 Oct 2026 18:36:50 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+url: no puede llevar usuario, clave, consulta (?) ni fragmento (#)
+```
+
+El renglón no repite la URL, por la misma razón que en la Lección 1: el error también es una respuesta, y lo que no debe salir en el `201` tampoco debe salir en el `422`.
+
 ### 3.7 El recurso que se fue: `410` frente a `404`
 
 #### 3.7.1 Lo que el `404` no dice
@@ -1202,6 +1220,19 @@ export function representar(servicio: Servicio): object {
   return { id: servicio.id, nombre: servicio.nombre, url: servicio.url, limite_ms: servicio.limiteMs };
 }
 
+// La url sale tal cual en cada representación del servicio: el 201, la consulta, la lista. Lo que una URL
+// lleva de secreto —usuario y clave (http://usuario:clave@…) o un token en la consulta (?token=…)— saldría
+// con ella, así que no se acepta. El fragmento (#…) tampoco: nunca viaja al servidor y solo estorba.
+// Si el texto no se puede leer como URL, aquí no se decide: lo rechaza otra regla.
+function urlConSecretos(texto: string): boolean {
+  try {
+    const url = new URL(texto);
+    return url.username !== "" || url.password !== "" || url.search !== "" || url.hash !== "";
+  } catch {
+    return false;
+  }
+}
+
 function representarRevision(revision: Revision): object {
   return { id: revision.id, servicio: revision.servicio, estado: revision.estado, resultado: revision.resultado };
 }
@@ -1276,6 +1307,7 @@ function validar(datos: Record<string, unknown>): Validos | Falla[] {
     }
   }
   if (!urlValida) fallas.push({ campo: "url", detalle: "debe ser una dirección http o https" });
+  else if (typeof url === "string" && urlConSecretos(url)) fallas.push({ campo: "url", detalle: "no puede llevar usuario, clave, consulta (?) ni fragmento (#)" });
   if (limite !== undefined && (typeof limite !== "number" || !Number.isInteger(limite) || limite < 100 || limite > 10000)) {
     fallas.push({ campo: "limite_ms", detalle: "debe ser un entero entre 100 y 10000" });
   }

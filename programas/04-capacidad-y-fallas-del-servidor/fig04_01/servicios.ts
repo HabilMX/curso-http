@@ -29,6 +29,19 @@ export function representar(servicio: Servicio): object {
   return { id: servicio.id, nombre: servicio.nombre, url: servicio.url, limite_ms: servicio.limiteMs };
 }
 
+// La url sale tal cual en cada representación del servicio: el 201, la consulta, la lista. Lo que una URL
+// lleva de secreto —usuario y clave (http://usuario:clave@…) o un token en la consulta (?token=…)— saldría
+// con ella, así que no se acepta. El fragmento (#…) tampoco: nunca viaja al servidor y solo estorba.
+// Si el texto no se puede leer como URL, aquí no se decide: lo rechaza otra regla.
+function urlConSecretos(texto: string): boolean {
+  try {
+    const url = new URL(texto);
+    return url.username !== "" || url.password !== "" || url.search !== "" || url.hash !== "";
+  } catch {
+    return false;
+  }
+}
+
 function representarRevision(revision: Revision): object {
   return { id: revision.id, servicio: revision.servicio, estado: revision.estado, resultado: revision.resultado };
 }
@@ -103,6 +116,7 @@ function validar(datos: Record<string, unknown>): Validos | Falla[] {
     }
   }
   if (!urlValida) fallas.push({ campo: "url", detalle: "debe ser una dirección http o https" });
+  else if (typeof url === "string" && urlConSecretos(url)) fallas.push({ campo: "url", detalle: "no puede llevar usuario, clave, consulta (?) ni fragmento (#)" });
   if (limite !== undefined && (typeof limite !== "number" || !Number.isInteger(limite) || limite < 100 || limite > 10000)) {
     fallas.push({ campo: "limite_ms", detalle: "debe ser un entero entre 100 y 10000" });
   }

@@ -568,6 +568,19 @@ function representar(servicio: Servicio): object {
   return { id: servicio.id, nombre: servicio.nombre, url: servicio.url, limite_ms: servicio.limiteMs };
 }
 
+// La url sale tal cual en cada representación del servicio: el 201, la consulta, la lista. Lo que una URL
+// lleva de secreto —usuario y clave (http://usuario:clave@…) o un token en la consulta (?token=…)— saldría
+// con ella, así que no se acepta. El fragmento (#…) tampoco: nunca viaja al servidor y solo estorba.
+// Si el texto no se puede leer como URL, aquí no se decide: lo rechaza otra regla.
+function urlConSecretos(texto: string): boolean {
+  try {
+    const url = new URL(texto);
+    return url.username !== "" || url.password !== "" || url.search !== "" || url.hash !== "";
+  } catch {
+    return false;
+  }
+}
+
 function representarRevision(revision: Revision): object {
   return { id: revision.id, servicio: revision.servicio, estado: revision.estado, resultado: revision.resultado };
 }
@@ -607,6 +620,10 @@ export async function darDeAlta({ peticion, respuesta }: Contexto): Promise<void
   const datos: { nombre?: unknown; url?: unknown; limite_ms?: unknown } = leido;
   if (typeof datos.nombre !== "string" || typeof datos.url !== "string") {
     fallar(respuesta, 400, "faltan nombre y url");
+    return;
+  }
+  if (urlConSecretos(datos.url)) {
+    fallar(respuesta, 400, "url no puede llevar usuario, clave, consulta (?) ni fragmento (#)");
     return;
   }
   // limite_ms es opcional, pero si viene se acota: sin cota, un límite de horas dejaría al revisor
@@ -1494,6 +1511,28 @@ resultado: {"estado":"CAIDO","codigo":null,"ms":null,"detalle":"destino prohibid
 ```
 
 Услугата беше регистрирана, инспекцията беше приета със своя `202` и проследяването ѝ работеше, но `revisor` **не се свърза**: преди да го направи, провери отново дестинацията, а `127.0.0.1:18081` вече не беше позволен. Резултатът е `CAIDO`, без код и без милисекунди, защото не е имало разговор, а подробността казва защо. В реална система между регистрацията и инспекцията се променя не списъкът с позволени, а онова, което DNS отговаря за дадено име; ефектът е същият и това е причината за двойната проверка. Спри `revisor` и го стартирай отново без променливата.
+
+#### 1.10.4 URL с тайни
+
+Регистрацията може да изпусне нещо и по друг начин, който няма общо с това къде се свързва `revisor`, а с това какво той **повтаря**. Един URL може да носи идентификационни данни в себе си: `http://usuario:clave@servidor/estado` (потребителят и паролата стоят преди знака @; [RFC 3986, раздел 3.2.1](https://www.rfc-editor.org/rfc/rfc3986#section-3.2.1), не препоръчва този формат точно затова) или `http://servidor/estado?token=…` (токен в заявката). `revisor` пази URL такъв, какъвто е пристигнал, и го връща във всяко представяне на услугата: в `201` на регистрацията, в справката и в списъка. Ако го приемеше, паролата щеше да стигне до всеки с право на четене и до всеки дневник или кеш, който пази тези отговори.
+
+Има два изхода. Единият е да се **заличи**: да се пази пълният URL и да се връща без потребител, без парола, без заявка и без фрагмент. Другият е да се **отхвърли при регистрацията**. `revisor` отхвърля заради това, което този урок учи за представянията: това, което връщат `201` и `200`, е *самата* услуга, и един клиент може да вземе това представяне и да го изпрати обратно (Урок 3 го прави с `PUT`, който заменя цялата услуга). Ако представянето премълчаваше част, който го изпрати повторно, би изтрил токена, без да знае, а представянето би показвало адрес, различен от този, който `revisor` проверява. Отхвърлянето държи правилото просто: `revisor` пази само това, което може да покаже изцяло. Фрагментът (`#…`) също се отхвърля, макар да не е тайна: той никога не стига до сървъра, така че в URL на услуга не служи за нищо.
+
+Правилото е в `urlConSecretos`, в `servicios.ts`, и `darDeAlta` го пита, преди да провери дестинацията. Затова отхвърлянето е същото и с фабричната конфигурация: макар `127.0.0.1:1` също да е забранена дестинация, URL се отхвърля първо заради това, което носи. Съобщението казва какво не е наред и **не повтаря URL**: да го повтори в грешката би означавало да върне тайната през друга врата.
+
+```text
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"fuga","url":"http://usuario:clave@127.0.0.1:1/estado?token=SECRETO#x"}'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 66
+Date: Thu, 22 Oct 2026 18:36:45 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+url no puede llevar usuario, clave, consulta (?) ni fragmento (#)
+```
+
+Все още е `400`, защото в този урок всичко, което `revisor` не приема, е `400`; Урок 3 го превръща в `422`. Ако една услуга изисква идентификационни данни, за да съобщи състоянието си, те не отиват в URL: истински revisor би ги пазил отделно, като тайна от конфигурацията си, и би ги изпращал в заглавка при проверката. Този `revisor` не го прави, нарочно: проверява само услуги, които отговарят без идентификационни данни. Стартовите услуги не минават през регистрацията, но техните URL са тези на лабораторията, без потребител и без заявка. Тестът `herramientas/url-sembrada.ts` засява URL `http://usuario:clave@127.0.0.1:1/estado?token=SECRETO#x` в `revisor` на всеки урок и проверява, че се отхвърля и че нито отговорите, нито терминалът повтарят нещо от него.
 
 ### 1.11 Проверка на типовете с `tsc` (по избор)
 

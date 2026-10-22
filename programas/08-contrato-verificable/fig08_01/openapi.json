@@ -1001,7 +1001,7 @@
           "url": {
             "type": "string",
             "format": "uri",
-            "description": "http o https; no puede apuntar a direcciones privadas ni reservadas (SSRF)."
+            "description": "http o https, sin usuario, clave, consulta (?) ni fragmento (#): el revisor la repite en cada representación del servicio (422 datos-invalidos si los trae); no puede apuntar a direcciones privadas ni reservadas (SSRF)."
           },
           "limite_ms": {
             "type": "integer",

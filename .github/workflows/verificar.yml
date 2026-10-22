@@ -83,6 +83,9 @@ jobs:
           fi
           echo "Revisadas con tsc estricto: $completas carpetas completas y $parches defectos o ejercicios sobre su revisor"
 
+      - name: La URL sembrada (obligatoria) — ningún revisor acepta ni repite usuario, clave, consulta o fragmento
+        run: herramientas/verificar-url-sembrada.sh
+
       - name: Nota sobre la revisión previa a publicar
         run: |
           echo "La revisión de material no publicable (rutas internas, nombres reservados,"

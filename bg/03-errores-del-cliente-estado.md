@@ -705,6 +705,24 @@ destino prohibido: localhost resuelve a una dirección privada o reservada
 
 Курсът остава при границата „четене срещу изпълнение“ по причина, свързана с онзи, който получава грешката: `400` казва на клиента, че **нещо във формата** на заявката му е счупено, обикновено програмна грешка, която трябва да се поправи в кода; `422` му казва, че формата е наред, а **стойностите** не се приемат, обикновено нещо, което е написал човек и което може да му се покаже във формуляр. Това са две различни действия и спецификацията има код за всяко. По-важно от точната граница е API-то да я **запише** и да я прилага еднакво във всичките си маршрути: клиентът може да се адаптира към всяка от двете политики; към API, което използва двете случайно — не.
 
+#### 3.6.4 URL с тайни също е `422`
+
+Правилото от Урок 1 остава: `url` не може да носи потребител, парола, заявка или фрагмент, защото `revisor` го повтаря във всяко представяне. Сега то живее във `validar()`, като още един ред: ако URL дори не е `http` или `https`, редът казва това; ако е, но носи нещо, за което `revisor` би трябвало да мълчи, казва другото. И тъй като `PUT` също минава през `validar()`, една промяна не може да вкара през задната врата това, което регистрацията отхвърля. Това е `422`, а не `400`, заради политиката на този урок: тялото е прочетено, а URL е това, което не може да се изпълни.
+
+```text
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Authorization: Bearer escritura-a' -H 'Content-Type: application/json' -d '{"nombre":"fuga","url":"http://usuario:clave@127.0.0.1:1/estado?token=SECRETO#x"}'
+HTTP/1.1 422 Unprocessable Content
+Content-Type: text/plain; charset=utf-8
+Content-Length: 67
+Date: Thu, 22 Oct 2026 18:36:50 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+url: no puede llevar usuario, clave, consulta (?) ni fragmento (#)
+```
+
+Редът не повтаря URL по същата причина като в Урок 1: грешката също е отговор и това, което не бива да излиза в `201`, не бива да излиза и в `422`.
+
 ### 3.7 Ресурсът, който си е отишъл: `410` срещу `404`
 
 #### 3.7.1 Какво не казва `404`
@@ -1202,6 +1220,19 @@ export function representar(servicio: Servicio): object {
   return { id: servicio.id, nombre: servicio.nombre, url: servicio.url, limite_ms: servicio.limiteMs };
 }
 
+// La url sale tal cual en cada representación del servicio: el 201, la consulta, la lista. Lo que una URL
+// lleva de secreto —usuario y clave (http://usuario:clave@…) o un token en la consulta (?token=…)— saldría
+// con ella, así que no se acepta. El fragmento (#…) tampoco: nunca viaja al servidor y solo estorba.
+// Si el texto no se puede leer como URL, aquí no se decide: lo rechaza otra regla.
+function urlConSecretos(texto: string): boolean {
+  try {
+    const url = new URL(texto);
+    return url.username !== "" || url.password !== "" || url.search !== "" || url.hash !== "";
+  } catch {
+    return false;
+  }
+}
+
 function representarRevision(revision: Revision): object {
   return { id: revision.id, servicio: revision.servicio, estado: revision.estado, resultado: revision.resultado };
 }
@@ -1276,6 +1307,7 @@ function validar(datos: Record<string, unknown>): Validos | Falla[] {
     }
   }
   if (!urlValida) fallas.push({ campo: "url", detalle: "debe ser una dirección http o https" });
+  else if (typeof url === "string" && urlConSecretos(url)) fallas.push({ campo: "url", detalle: "no puede llevar usuario, clave, consulta (?) ni fragmento (#)" });
   if (limite !== undefined && (typeof limite !== "number" || !Number.isInteger(limite) || limite < 100 || limite > 10000)) {
     fallas.push({ campo: "limite_ms", detalle: "debe ser un entero entre 100 y 10000" });
   }

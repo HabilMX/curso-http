@@ -1046,6 +1046,19 @@ function representar(servicio: Servicio): object {
   return { id: servicio.id, nombre: servicio.nombre, url: servicio.url, limite_ms: servicio.limiteMs };
 }
 
+// La url sale tal cual en cada representación del servicio: el 201, la consulta, la lista. Lo que una URL
+// lleva de secreto —usuario y clave (http://usuario:clave@…) o un token en la consulta (?token=…)— saldría
+// con ella, así que no se acepta. El fragmento (#…) tampoco: nunca viaja al servidor y solo estorba.
+// Si el texto no se puede leer como URL, aquí no se decide: lo rechaza otra regla.
+function urlConSecretos(texto: string): boolean {
+  try {
+    const url = new URL(texto);
+    return url.username !== "" || url.password !== "" || url.search !== "" || url.hash !== "";
+  } catch {
+    return false;
+  }
+}
+
 function representarRevision(revision: Revision): object {
   return { id: revision.id, servicio: revision.servicio, estado: revision.estado, resultado: revision.resultado };
 }
@@ -1105,6 +1118,10 @@ export async function darDeAlta({ peticion, respuesta, credencial }: Contexto): 
   if (datos === undefined) return;
   if (typeof datos.nombre !== "string" || typeof datos.url !== "string") {
     fallar(respuesta, 400, "faltan nombre y url");
+    return;
+  }
+  if (urlConSecretos(datos.url)) {
+    fallar(respuesta, 400, "url no puede llevar usuario, clave, consulta (?) ni fragmento (#)");
     return;
   }
   // limite_ms es opcional, pero si viene se acota: sin cota, un límite de horas dejaría al revisor

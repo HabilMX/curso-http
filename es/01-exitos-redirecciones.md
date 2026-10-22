@@ -568,6 +568,19 @@ function representar(servicio: Servicio): object {
   return { id: servicio.id, nombre: servicio.nombre, url: servicio.url, limite_ms: servicio.limiteMs };
 }
 
+// La url sale tal cual en cada representación del servicio: el 201, la consulta, la lista. Lo que una URL
+// lleva de secreto —usuario y clave (http://usuario:clave@…) o un token en la consulta (?token=…)— saldría
+// con ella, así que no se acepta. El fragmento (#…) tampoco: nunca viaja al servidor y solo estorba.
+// Si el texto no se puede leer como URL, aquí no se decide: lo rechaza otra regla.
+function urlConSecretos(texto: string): boolean {
+  try {
+    const url = new URL(texto);
+    return url.username !== "" || url.password !== "" || url.search !== "" || url.hash !== "";
+  } catch {
+    return false;
+  }
+}
+
 function representarRevision(revision: Revision): object {
   return { id: revision.id, servicio: revision.servicio, estado: revision.estado, resultado: revision.resultado };
 }
@@ -607,6 +620,10 @@ export async function darDeAlta({ peticion, respuesta }: Contexto): Promise<void
   const datos: { nombre?: unknown; url?: unknown; limite_ms?: unknown } = leido;
   if (typeof datos.nombre !== "string" || typeof datos.url !== "string") {
     fallar(respuesta, 400, "faltan nombre y url");
+    return;
+  }
+  if (urlConSecretos(datos.url)) {
+    fallar(respuesta, 400, "url no puede llevar usuario, clave, consulta (?) ni fragmento (#)");
     return;
   }
   // limite_ms es opcional, pero si viene se acota: sin cota, un límite de horas dejaría al revisor
@@ -1494,6 +1511,28 @@ resultado: {"estado":"CAIDO","codigo":null,"ms":null,"detalle":"destino prohibid
 ```
 
 El servicio estaba registrado, la revisión se aceptó con su `202` y su seguimiento funcionó, pero el `revisor` **no se conectó**: antes de hacerlo volvió a revisar el destino, y `127.0.0.1:18081` ya no estaba permitido. El resultado es `CAIDO`, sin código ni milisegundos, porque no hubo conversación, y el detalle dice por qué. En un sistema real, lo que cambia entre el alta y la revisión no es la lista de permitidos, sino lo que el DNS contesta para un nombre; el efecto es el mismo, y esta es la razón de revisar dos veces. Detén el `revisor` y arráncalo otra vez sin la variable.
+
+#### 1.10.4 Una URL con secretos
+
+Hay otra forma de que el alta filtre algo, y no tiene que ver con a dónde se conecta el `revisor`, sino con lo que **repite**. Una URL puede llevar una credencial adentro: `http://usuario:clave@servidor/estado` (el usuario y la clave van antes de la arroba; el [RFC 3986, sección 3.2.1](https://www.rfc-editor.org/rfc/rfc3986#section-3.2.1), desaconseja ese formato justo por eso) o `http://servidor/estado?token=…` (un token en la consulta). El `revisor` guarda la URL tal como llegó y la devuelve en cada representación del servicio: en el `201` del alta, en la consulta y en la lista. Si la aceptara, la clave le llegaría a cualquiera con permiso de lectura y a cada bitácora o caché que guarde esas respuestas.
+
+Hay dos salidas. Una es **redactar**: guardar la URL completa y devolverla sin usuario, sin clave, sin consulta y sin fragmento. La otra es **rechazarla al darla de alta**. El `revisor` rechaza, por lo que esta lección enseña sobre representaciones: lo que devuelven el `201` y el `200` es *el* servicio, y un cliente puede tomar esa representación y volver a mandarla (la Lección 3 lo hace con `PUT`, que reemplaza el servicio entero). Si la representación callara una parte, quien la reenviara borraría el token sin saberlo, y la representación diría una dirección distinta de la que el `revisor` consulta. Rechazar deja la regla simple: el `revisor` solo guarda lo que puede mostrar completo. El fragmento (`#…`) también se rechaza, aunque no sea secreto: nunca viaja al servidor, así que en la URL de un servicio no sirve para nada.
+
+La regla está en `urlConSecretos`, en `servicios.ts`, y `darDeAlta` la pregunta antes de revisar el destino. Por eso el rechazo sale igual con la configuración de fábrica: aunque `127.0.0.1:1` también sea un destino prohibido, la URL se rechaza primero por lo que lleva. El mensaje dice qué está mal y **no repite la URL**: repetirla en el error sería devolver el secreto por otra puerta.
+
+```text
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"fuga","url":"http://usuario:clave@127.0.0.1:1/estado?token=SECRETO#x"}'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 66
+Date: Thu, 22 Oct 2026 18:36:45 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+url no puede llevar usuario, clave, consulta (?) ni fragmento (#)
+```
+
+Todavía es un `400`, porque en esta lección todo lo que el `revisor` no acepta lo es; la Lección 3 lo convierte en `422`. Si un servicio exige una credencial para responder su estado, esa credencial no va en la URL: un revisor real la guardaría aparte, como un secreto de su configuración, y la mandaría en una cabecera al consultar. Este `revisor` no lo hace, a propósito: solo consulta servicios que responden sin credencial. Los servicios de arranque no pasan por el alta, pero sus URL son las del laboratorio, sin usuario ni consulta. La prueba `herramientas/url-sembrada.ts` siembra la URL `http://usuario:clave@127.0.0.1:1/estado?token=SECRETO#x` en el `revisor` de cada lección y comprueba que se rechace y que ni las respuestas ni la terminal repitan nada de ella.
 
 ### 1.11 Revisar los tipos con `tsc` (opcional)
 

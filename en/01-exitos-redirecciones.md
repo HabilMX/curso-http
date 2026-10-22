@@ -568,6 +568,19 @@ function representar(servicio: Servicio): object {
   return { id: servicio.id, nombre: servicio.nombre, url: servicio.url, limite_ms: servicio.limiteMs };
 }
 
+// La url sale tal cual en cada representación del servicio: el 201, la consulta, la lista. Lo que una URL
+// lleva de secreto —usuario y clave (http://usuario:clave@…) o un token en la consulta (?token=…)— saldría
+// con ella, así que no se acepta. El fragmento (#…) tampoco: nunca viaja al servidor y solo estorba.
+// Si el texto no se puede leer como URL, aquí no se decide: lo rechaza otra regla.
+function urlConSecretos(texto: string): boolean {
+  try {
+    const url = new URL(texto);
+    return url.username !== "" || url.password !== "" || url.search !== "" || url.hash !== "";
+  } catch {
+    return false;
+  }
+}
+
 function representarRevision(revision: Revision): object {
   return { id: revision.id, servicio: revision.servicio, estado: revision.estado, resultado: revision.resultado };
 }
@@ -607,6 +620,10 @@ export async function darDeAlta({ peticion, respuesta }: Contexto): Promise<void
   const datos: { nombre?: unknown; url?: unknown; limite_ms?: unknown } = leido;
   if (typeof datos.nombre !== "string" || typeof datos.url !== "string") {
     fallar(respuesta, 400, "faltan nombre y url");
+    return;
+  }
+  if (urlConSecretos(datos.url)) {
+    fallar(respuesta, 400, "url no puede llevar usuario, clave, consulta (?) ni fragmento (#)");
     return;
   }
   // limite_ms es opcional, pero si viene se acota: sin cota, un límite de horas dejaría al revisor
@@ -1494,6 +1511,28 @@ resultado: {"estado":"CAIDO","codigo":null,"ms":null,"detalle":"destino prohibid
 ```
 
 The service was registered, the check was accepted with its `202`, and its tracking resource worked, but the `revisor` **did not connect**: before doing so it re-evaluated the destination, and `127.0.0.1:18081` was no longer permitted. The result is `CAIDO`, with neither status code nor milliseconds, because no exchange occurred, and the detail explains why. In a real system, what changes between registration and check is not the allowlist, but what DNS returns for a hostname; the effect is the same, and this is why validation happens twice. Stop the `revisor` and start it again without the environment variable.
+
+#### 1.10.4 A URL with secrets
+
+There is another way for registration to leak something, and it has nothing to do with where the `revisor` connects, but with what it **repeats**. A URL can carry a credential inside it: `http://usuario:clave@servidor/estado` (the user and the password go before the at sign; [RFC 3986, section 3.2.1](https://www.rfc-editor.org/rfc/rfc3986#section-3.2.1), discourages that format for exactly this reason) or `http://servidor/estado?token=…` (a token in the query). The `revisor` stores the URL as it arrived and returns it in every representation of the service: in the `201` of the registration, in the lookup and in the list. If it accepted it, the password would reach anyone with read permission and every log or cache that stores those responses.
+
+There are two ways out. One is to **redact**: store the full URL and return it without user, password, query or fragment. The other is to **reject it at registration**. The `revisor` rejects, because of what this lesson teaches about representations: what the `201` and the `200` return is *the* service, and a client can take that representation and send it back (Lesson 3 does so with `PUT`, which replaces the whole service). If the representation kept quiet about a part, whoever resent it would erase the token without knowing, and the representation would state an address different from the one the `revisor` checks. Rejecting keeps the rule simple: the `revisor` only stores what it can show in full. The fragment (`#…`) is rejected too, even though it is not a secret: it never travels to the server, so in a service URL it is useless.
+
+The rule lives in `urlConSecretos`, in `servicios.ts`, and `darDeAlta` asks it before checking the destination. That is why the rejection is the same with the factory configuration: even though `127.0.0.1:1` is also a forbidden destination, the URL is rejected first for what it carries. The message says what is wrong and **does not repeat the URL**: repeating it in the error would hand the secret back through another door.
+
+```text
+$ curl -i -X POST http://127.0.0.1:18080/servicios -H 'Content-Type: application/json' -d '{"nombre":"fuga","url":"http://usuario:clave@127.0.0.1:1/estado?token=SECRETO#x"}'
+HTTP/1.1 400 Bad Request
+Content-Type: text/plain; charset=utf-8
+Content-Length: 66
+Date: Thu, 22 Oct 2026 18:36:45 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+url no puede llevar usuario, clave, consulta (?) ni fragmento (#)
+```
+
+It is still a `400`, because in this lesson everything the `revisor` does not accept is one; Lesson 3 turns it into a `422`. If a service requires a credential to report its status, that credential does not go in the URL: a real revisor would store it separately, as a secret of its configuration, and send it in a header when checking. This `revisor` does not do that, on purpose: it only checks services that answer without a credential. The startup services do not go through registration, but their URLs are the laboratory's, with no user and no query. The test `herramientas/url-sembrada.ts` plants the URL `http://usuario:clave@127.0.0.1:1/estado?token=SECRETO#x` in each lesson's `revisor` and checks that it is rejected and that neither the responses nor the terminal repeat any of it.
 
 ### 1.11 Type checking with `tsc` (optional)
 
