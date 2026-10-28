@@ -6,7 +6,7 @@ HTTP/1.1 503 Service Unavailable
 Retry-After: 120
 Content-Type: text/plain; charset=utf-8
 Content-Length: 50
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -17,7 +17,7 @@ HTTP/1.1 201 Created
 Location: /servicios/demo
 Content-Type: text/plain; charset=utf-8
 Content-Length: 38
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -25,23 +25,23 @@ Keep-Alive: timeout=5
 lo pediste en /codigo/201
 $ curl -i http://127.0.0.1:18080/codigo/204
 HTTP/1.1 204 No Content
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
 $ curl -i http://127.0.0.1:18080/codigo/205
 HTTP/1.1 205 Reset Content
-Date: Wed, 21 Oct 2026 22:00:20 GMT
+Content-Length: 0
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
-Transfer-Encoding: chunked
 
 $ curl -i http://127.0.0.1:18080/codigo/401
 HTTP/1.1 401 Unauthorized
 WWW-Authenticate: Bearer realm="revisor"
 Content-Type: text/plain; charset=utf-8
 Content-Length: 43
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -52,7 +52,7 @@ HTTP/1.1 405 Method Not Allowed
 Allow: GET, HEAD
 Content-Type: text/plain; charset=utf-8
 Content-Length: 56
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -62,7 +62,7 @@ $ curl -i http://127.0.0.1:18080/servicios
 HTTP/1.1 404 Not Found
 Content-Type: text/plain; charset=utf-8
 Content-Length: 68
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -72,7 +72,7 @@ $ curl -i http://127.0.0.1:18080/codigo/103
 HTTP/1.1 400 Bad Request
 Content-Type: text/plain; charset=utf-8
 Content-Length: 76
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -91,7 +91,7 @@ $ curl -I http://127.0.0.1:18080/codigo/418
 HTTP/1.1 418 I'm a Teapot
 Content-Type: text/plain; charset=utf-8
 Content-Length: 57
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -112,14 +112,14 @@ HTTP/1.1 308 Permanent Redirect
 Location: /codigo/200
 Content-Type: text/plain; charset=utf-8
 Content-Length: 49
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
 HTTP/1.1 200 OK
 Content-Type: text/plain; charset=utf-8
 Content-Length: 33
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 

@@ -298,6 +298,10 @@ function enviar(respuesta: ServerResponse, codigo: number, explicacion: string):
     cabeceras["Content-Type"] = "text/plain; charset=utf-8";
     cabeceras["Content-Length"] = String(Buffer.byteLength(cuerpo));
   }
+  // El 205 no se enmarca solo como el 204 y el 304 (RFC 9112, sección 6.3): sin Content-Length ni Transfer-Encoding
+  // terminaría al cerrar la conexión, y Node mandaría «Transfer-Encoding: chunked» con un cuerpo vacío.
+  // «Content-Length: 0» dice dónde termina sin mandar contenido.
+  if (codigo === 205) cabeceras["Content-Length"] = "0";
   if (nombre === undefined) {
     respuesta.writeHead(codigo, cabeceras);
   } else {
@@ -360,7 +364,7 @@ HTTP/1.1 503 Service Unavailable
 Retry-After: 120
 Content-Type: text/plain; charset=utf-8
 Content-Length: 50
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -376,7 +380,7 @@ HTTP/1.1 201 Created
 Location: /servicios/demo
 Content-Type: text/plain; charset=utf-8
 Content-Length: 38
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -389,21 +393,21 @@ A response with no content, carrying neither body nor `Content-Type`, because th
 ```text
 $ curl -i http://127.0.0.1:18080/codigo/204
 HTTP/1.1 204 No Content
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
 ```
 
-The `205` is of the same kind: no body. Since the program does not write `Content-Length`, Node sends the response in chunks, with a single final chunk of size zero (the form explained in 0.8.2); there is no content:
+The `205` is of the same kind: no body, because RFC 9110 ([section 15.3.6](https://www.rfc-editor.org/rfc/rfc9110.html#section-15.3.6)) forbids generating content in a `205`. But it carries a header the `204` does not, and for a reason. RFC 9112 ([section 6.3](https://www.rfc-editor.org/rfc/rfc9112.html#section-6.3)) says a `204` or `304` response ends at the first empty line, and the `205` is not covered by that rule: without `Content-Length` or `Transfer-Encoding`, its body would end only when the connection closed. If the program declared nothing, Node would send the `205` in chunks (the form explained in 0.8.2), with a single final chunk of size zero. That is why `enviar` gives it `Content-Length: 0`: it says where the response ends without sending any content, and there are no chunks:
 
 ```text
 $ curl -i http://127.0.0.1:18080/codigo/205
 HTTP/1.1 205 Reset Content
-Date: Wed, 21 Oct 2026 22:00:20 GMT
+Content-Length: 0
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
-Transfer-Encoding: chunked
 
 ```
 
@@ -415,7 +419,7 @@ HTTP/1.1 401 Unauthorized
 WWW-Authenticate: Bearer realm="revisor"
 Content-Type: text/plain; charset=utf-8
 Content-Length: 43
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -433,7 +437,7 @@ HTTP/1.1 405 Method Not Allowed
 Allow: GET, HEAD
 Content-Type: text/plain; charset=utf-8
 Content-Length: 56
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -448,7 +452,7 @@ $ curl -i http://127.0.0.1:18080/servicios
 HTTP/1.1 404 Not Found
 Content-Type: text/plain; charset=utf-8
 Content-Length: 68
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -463,7 +467,7 @@ $ curl -i http://127.0.0.1:18080/codigo/103
 HTTP/1.1 400 Bad Request
 Content-Type: text/plain; charset=utf-8
 Content-Length: 76
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -506,7 +510,7 @@ $ curl -I http://127.0.0.1:18080/codigo/418
 HTTP/1.1 418 I'm a Teapot
 Content-Type: text/plain; charset=utf-8
 Content-Length: 57
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
@@ -964,14 +968,14 @@ HTTP/1.1 308 Permanent Redirect
 Location: /codigo/200
 Content-Type: text/plain; charset=utf-8
 Content-Length: 49
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
 HTTP/1.1 200 OK
 Content-Type: text/plain; charset=utf-8
 Content-Length: 33
-Date: Wed, 21 Oct 2026 08:05:05 GMT
+Date: Tue, 27 Oct 2026 10:26:22 GMT
 Connection: keep-alive
 Keep-Alive: timeout=5
 
