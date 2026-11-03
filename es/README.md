@@ -1,6 +1,6 @@
 # Errores que enseñan: códigos HTTP y Problem Details — una API que dice la verdad cuando falla
 
-**Por Dorian Chávez, fundador de Hábil y arquitecto de integración.**
+**Por Dorian Chávez, cofundador de Hábil y arquitecto de integración.**
 
 **Para quién es:** quien ya escribió una API en cualquier lenguaje y alguna vez respondió `200` con un cuerpo que decía `{"error": …}`, usó `500` para todo lo que salió mal, o no supo explicar la diferencia entre `401` y `403`, entre `409` y `412`, entre `400` y `422`; y quien consume APIs ajenas y quiere dejar de adivinar qué hacer cuando fallan. Es un curso de nivel intermedio: se supone que sabes qué es una petición HTTP, qué es JSON y cómo levantar un servidor. No se supone que conozcas las especificaciones: cada código se explica cuando aparece, y se explica por qué existe, no solo cuál número usar.
 
